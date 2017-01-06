@@ -7,8 +7,9 @@ Example how to read & write data with MFRC522
 # documentation
 [MFRC522-Doc.pdf](https://www.nxp.com/documents/data_sheet/MFRC522.pdf)
 
-# other projects
+# other sources
 https://github.com/miguelbalboa/rfid
+
 https://github.com/mxgxw/MFRC522-python
 
 # which hardware is used?
