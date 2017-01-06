@@ -1,0 +1,14 @@
+{
+  "name": "mfrc522-rpi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "mfrc522.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tristan Teufel",
+  "license": "ISC",
+  "dependencies": {
+    "wiring-pi": "^2.2.1"
+  }
+}
