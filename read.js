@@ -8,17 +8,17 @@ console.log("Press Ctrl-C to stop.");
 while (true) {
 
     //# Scan for cards
-    var response = mfrc522.request(mfrc522.PICC_REQIDL);
+    var response = mfrc522.findCard();
     var status = response.status;
     var tagType = response.bitSize;
 
     //# If a card is found
     if (status == mfrc522.MI_OK) {
-        console.log("Card detected");
+        console.log("Card detected, CardType: "+tagType);
     }
 
     //# Get the UID of the card
-    response = mfrc522.anticoll();
+    response = mfrc522.getUid();
     status = response.status;
     var uid = response.data;
 
@@ -31,12 +31,12 @@ while (true) {
         var key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
         //# Select the scanned tag
-        mfrc522.selectTag(uid);
+        mfrc522.selectCard(uid);
 
         //# Dump the data
-        mfrc522.dumpClassic1K(key, uid);
+        mfrc522.dumpCard(key, uid);
 
         //# Stop
-        mfrc522.stopCrypto1();
+        mfrc522.stopCrypto();
     }
 }

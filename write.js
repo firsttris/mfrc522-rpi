@@ -9,17 +9,17 @@ var continueReading = true;
 while (continueReading) {
 
     //# Scan for cards
-    var response = mfrc522.request(mfrc522.PICC_REQIDL);
+    var response = mfrc522.findCard();
     var status = response.status;
     var tagType = response.bitSize;
 
     //# If a card is found
     if (status == mfrc522.MI_OK) {
-        console.log("Card detected");
+        console.log("Card detected, CardType: "+tagType);
     }
 
     //# Get the UID of the card
-    response = mfrc522.anticoll();
+    response = mfrc522.getUid();
     status = response.status;
     var uid = response.data;
 
@@ -32,10 +32,10 @@ while (continueReading) {
         var key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
         //# Select the scanned tag
-        mfrc522.selectTag(uid);
+        mfrc522.selectCard(uid);
 
         //# Authenticate
-        status = mfrc522.auth(mfrc522.PICC_AUTHENT1A,8,key,uid);
+        status = mfrc522.authenticate(mfrc522.PICC_AUTHENT1A,8,key,uid);
 
         //# Check if authenticated
         if (status == mfrc522.MI_OK) {
@@ -44,26 +44,26 @@ while (continueReading) {
             var data = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
             console.log("Sector 8 looked like this:");
-            mfrc522.readDataFromSector(8);
+            mfrc522.readDataFromBlock(8);
 
             console.log("Sector 8 will now be filled with 0xFF:");
-            mfrc522.writeDataToSector(8,data);
+            mfrc522.writeDataToBlock(8,data);
 
             console.log("It now looks like this:");
-            mfrc522.readDataFromSector(8);
+            mfrc522.readDataFromBlock(8);
 
             data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
             //console.log("All Sectors");
-            //mfrc522.DumpClassic1K(key, uid);
+            //mfrc522.dumpCard(key, uid);
 
             console.log("Now we fill it with 0x00:");
-            mfrc522.writeDataToSector(8,data);
+            mfrc522.writeDataToBlock(8,data);
 
             console.log("It is now empty:");
-            mfrc522.readDataFromSector(8);
+            mfrc522.readDataFromBlock(8);
 
-            mfrc522.stopCrypto1();
+            mfrc522.stopCrypto();
 
             continueReading = false;
             console.log("finished successfully!");

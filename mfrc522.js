@@ -96,12 +96,24 @@ module.exports = {
     Reserved33: 0x3E,
     Reserved34: 0x3F,
 
-    init: function () {
+
+    init: function() {
+        this.initRaspberryPi();
+        this.initChip();
+    },
+
+    initRaspberryPi: function () {
         this.wpi = require("wiring-pi");
         this.wpi.wiringPiSPISetup(0, 1000000);
         this.wpi.setup("gpio");
         this.wpi.pinMode(this.NRSTPD, this.wpi.OUTPUT);
         this.wpi.digitalWrite(this.NRSTPD, this.wpi.HIGH);
+    },
+
+    /**
+     * Initializes the MFRC522 chip.
+     */
+    initChip: function () {
         this.reset();
         this.writeRegister(this.TModeReg, 0x8D); // TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
         this.writeRegister(this.TPrescalerReg, 0x3E); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
@@ -116,12 +128,24 @@ module.exports = {
         this.writeRegister(this.CommandReg, this.PCD_RESETPHASE);
     },
 
+    /**
+     * Writes a byte to the specified register in the MFRC522 chip.
+     * The interface is described in the datasheet section 8.1.2.
+     * @param addr
+     * @param val
+     */
     writeRegister: function (addr, val) {
         var data = [(addr << 1) & 0x7E, val];
         var uint8Data = Uint8Array.from(data);
         this.wpi.wiringPiSPIDataRW(0, uint8Data);
     },
 
+    /**
+     * Reads a byte from the specified register in the MFRC522 chip.
+     * The interface is described in the datasheet section 8.1.2.
+     * @param addr
+     * @returns {*}
+     */
     readRegister: function (addr) {
         var data = [((addr << 1) & 0x7E) | 0x80, 0];
         var uint8Data = Uint8Array.from(data);
@@ -129,12 +153,22 @@ module.exports = {
         return uint8Data[1]
     },
 
-    setBitMask: function (reg, mask) {
+    /**
+     * Sets the bits given in mask in register reg.
+     * @param reg
+     * @param mask
+     */
+    setRegisterBitMask: function (reg, mask) {
         var response = this.readRegister(reg);
         this.writeRegister(reg, response | mask);
     },
 
-    clearBitMask: function (reg, mask) {
+    /**
+     * Clears the bits given in mask from register reg.
+     * @param reg
+     * @param mask
+     */
+    clearRegisterBitMask: function (reg, mask) {
         var response = this.readRegister(reg);
         this.writeRegister(reg, response & (~mask));
     },
@@ -142,12 +176,12 @@ module.exports = {
     antennaOn: function () {
         var response = this.readRegister(this.TxControlReg);
         if (~(response & 0x03) != 0) {
-            this.setBitMask(this.TxControlReg, 0x03);
+            this.setRegisterBitMask(this.TxControlReg, 0x03);
         }
     },
 
     antennaOff: function () {
-        this.clearBitMask(this.TxControlReg, 0x03);
+        this.clearRegisterBitMask(this.TxControlReg, 0x03);
     },
 
     toCard: function (command, bitsToSend) {
@@ -167,8 +201,8 @@ module.exports = {
             waitIRq = 0x30;
         }
         this.writeRegister(this.CommIEnReg, irqEn | 0x80); //Interrupt request is enabled
-        this.clearBitMask(this.CommIrqReg, 0x80); //Clears all interrupt request bits
-        this.setBitMask(this.FIFOLevelReg, 0x80); //FlushBuffer=1, FIFO initialization
+        this.clearRegisterBitMask(this.CommIrqReg, 0x80); //Clears all interrupt request bits
+        this.setRegisterBitMask(this.FIFOLevelReg, 0x80); //FlushBuffer=1, FIFO initialization
         this.writeRegister(this.CommandReg, this.PCD_IDLE); // Stop calculating CRC for new content in the FIFO.
         //Write data to the FIFO
         for (var i = 0; i < bitsToSend.length; i++) {
@@ -177,7 +211,7 @@ module.exports = {
         //Excuting command
         this.writeRegister(this.CommandReg, command);
         if (command == this.PCD_TRANSCEIVE) {
-            this.setBitMask(this.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
+            this.setRegisterBitMask(this.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
         }
         //Wait for the received data to complete
         i = 2000; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
@@ -188,7 +222,7 @@ module.exports = {
         }
         while ((i != 0) && !(n & 0x01) && !(n & waitIRq));
 
-        this.clearBitMask(this.BitFramingReg, 0x80); //StartSend=0
+        this.clearRegisterBitMask(this.BitFramingReg, 0x80); //StartSend=0
         if (i != 0) {
             if ((this.readRegister(this.ErrorReg) & 0x1B) == 0x00) { //BufferOvfl Collerr CRCErr ProtecolErr
                 status = this.MI_OK;
@@ -223,18 +257,33 @@ module.exports = {
         return {status: status, data: data, bitSize: bitSize};
     },
 
-    request: function (reqMode) {
+    /**
+     *
+     * Find card, read card type
+     * TagType - Returns the card type
+     * 0x4400 = Mifare_UltraLight
+     * 0x0400 = Mifare_One (S50)
+     * 0x0200 = Mifare_One (S70)
+     * 0x0800 = Mifare_Pro (X)
+     * 0x4403 = Mifare_DESFire
+     * @returns {{status: *, data: Array, bitSize: *}}
+     */
+    findCard: function () {
         this.writeRegister(this.BitFramingReg, 0x07);
-        var TagType = [];
-        TagType.push(reqMode);
-        var response = this.toCard(this.PCD_TRANSCEIVE, TagType);
+        var tagType = [this.PICC_REQIDL];
+        var response = this.toCard(this.PCD_TRANSCEIVE, tagType);
         if ((response.status != this.MI_OK) || (response.bitSize != 0x10)) {
-            status = this.MI_ERR;
+            var status = this.MI_ERR;
         }
-        return {status: response.status, data: response.data, bitSize: response.bitSize};
+        return {status: status, data: response.data, bitSize: response.bitSize};
     },
 
-    anticoll: function () {
+    /**
+     * Anti-collision detection, get uid (serial number) of found card
+     * 4-byte card to return the serial number, the first five bytes for the check byte
+     * @returns {{status: *, data: Array, bitSize: *}}
+     */
+    getUid: function () {
         this.writeRegister(this.BitFramingReg, 0x00);
         var uid = [];
         uid.push(this.PICC_ANTICOLL);
@@ -255,9 +304,14 @@ module.exports = {
         return {status: status, data: data, bitSize: bitSize};
     },
 
+    /**
+     * Use the CRC coprocessor in the MFRC522 to calculate a CRC
+     * @param data
+     * @returns {Array}
+     */
     calculateCRC: function (data) {
-        this.clearBitMask(this.DivIrqReg, 0x04); // Clear the CRCIRq interrupt request bit
-        this.setBitMask(this.FIFOLevelReg, 0x80); // FlushBuffer = 1, FIFO initialization
+        this.clearRegisterBitMask(this.DivIrqReg, 0x04); // Clear the CRCIRq interrupt request bit
+        this.setRegisterBitMask(this.FIFOLevelReg, 0x80); // FlushBuffer = 1, FIFO initialization
         //Write data to the FIFO
         for (var i = 0; i < data.length; i++) {
             this.writeRegister(this.FIFODataReg, data[i]);
@@ -282,7 +336,12 @@ module.exports = {
         return crcBits;
     },
 
-    selectTag: function (uid) {
+    /**
+     * Select card, read card memory capacity
+     * @param uid
+     * @returns {*}
+     */
+    selectCard: function (uid) {
         var buffer = [];
         buffer.push(this.PICC_SELECTTAG);
         buffer.push(0x70);
@@ -304,15 +363,25 @@ module.exports = {
         }
     },
 
-    auth: function (authMode, address, sectorKey, uid) {
+    /**
+     * Verify the card password
+     * @param authMode - password authentication mode
+     *                   0x60 = Verify the A key
+     *                   0x61 = Verify the B key
+     * @param address - block address
+     * @param key - password for block
+     * @param uid - card serial number, 4 bytes
+     * @returns {*}
+     */
+    authenticate: function (authMode, address, key, uid) {
         var buffer = [];
         //# First byte should be the authMode (A or B)
         buffer.push(authMode);
         //# Second byte is the trailerBlock (usually 7)
         buffer.push(address);
         //# Now we need to append the authKey which usually is 6 bytes of 0xFF
-        for (var i = 0; i < sectorKey.length; i++) {
-            buffer.push(sectorKey[i]);
+        for (var i = 0; i < key.length; i++) {
+            buffer.push(key[i]);
         }
         // Next we append the first 4 bytes of the UID
         for (var j = 0; j < 4; j++) {
@@ -327,11 +396,11 @@ module.exports = {
         return status;
     },
 
-    stopCrypto1: function () {
-        this.clearBitMask(this.Status2Reg, 0x08);
+    stopCrypto: function () {
+        this.clearRegisterBitMask(this.Status2Reg, 0x08);
     },
 
-    readDataFromSector: function (address) {
+    readDataFromBlock: function (address) {
         var request = [];
         request.push(this.PICC_READ);
         request.push(address);
@@ -351,7 +420,7 @@ module.exports = {
         }
     },
 
-    writeDataToSector: function (address, sixteenBits) {
+    writeDataToBlock: function (address, sixteenBits) {
         var buffer = [];
         buffer.push(this.PICC_WRITE);
         buffer.push(address);
@@ -389,12 +458,17 @@ module.exports = {
         }
     },
 
-    dumpClassic1K: function (key, uid) {
+    /**
+     * dump card
+     * @param key
+     * @param uid
+     */
+    dumpCard: function (key, uid) {
         var i = 0;
         while (i < 64) {
-            var status = this.auth(this.PICC_AUTHENT1A, i, key, uid);
+            var status = this.authenticate(this.PICC_AUTHENT1A, i, key, uid);
             if (status == this.MI_OK) {
-                this.readDataFromSector(i);
+                this.readDataFromBlock(i);
             }
             else {
                 console.log("Authentication Error");
