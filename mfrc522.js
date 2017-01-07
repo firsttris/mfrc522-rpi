@@ -103,26 +103,26 @@ module.exports = {
         this.wpi.pinMode(this.NRSTPD, this.wpi.OUTPUT);
         this.wpi.digitalWrite(this.NRSTPD, this.wpi.HIGH);
         this.reset();
-        this.write(this.TModeReg, 0x8D);
-        this.write(this.TPrescalerReg, 0x3E);
-        this.write(this.TReloadRegL, 30);
-        this.write(this.TReloadRegH, 0);
-        this.write(this.TxAutoReg, 0x40);
-        this.write(this.ModeReg, 0x3D);
-        this.antennaOn();
+        this.writeRegister(this.TModeReg, 0x8D); // TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
+        this.writeRegister(this.TPrescalerReg, 0x3E); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
+        this.writeRegister(this.TReloadRegL, 30); // Reload timer with 0x3E8 = 1000, ie 25ms before timeout.
+        this.writeRegister(this.TReloadRegH, 0);
+        this.writeRegister(this.TxAutoReg, 0x40); // Default 0x00. Force a 100 % ASK modulation independent of the ModGsPReg register setting
+        this.writeRegister(this.ModeReg, 0x3D); // Default 0x3F. Set the preset value for the CRC coprocessor for the CalcCRC command to 0x6363 (ISO 14443-3 part 6.2.4)
+        this.antennaOn(); // Enable the antenna driver pins TX1 and TX2 (they were disabled by the reset)
     },
 
     reset: function () {
-        this.write(this.CommandReg, this.PCD_RESETPHASE);
+        this.writeRegister(this.CommandReg, this.PCD_RESETPHASE);
     },
 
-    write: function (addr, val) {
+    writeRegister: function (addr, val) {
         var data = [(addr << 1) & 0x7E, val];
         var uint8Data = Uint8Array.from(data);
         this.wpi.wiringPiSPIDataRW(0, uint8Data);
     },
 
-    read: function (addr) {
+    readRegister: function (addr) {
         var data = [((addr << 1) & 0x7E) | 0x80, 0];
         var uint8Data = Uint8Array.from(data);
         this.wpi.wiringPiSPIDataRW(0, uint8Data);
@@ -130,17 +130,17 @@ module.exports = {
     },
 
     setBitMask: function (reg, mask) {
-        var response = this.read(reg);
-        this.write(reg, response | mask);
+        var response = this.readRegister(reg);
+        this.writeRegister(reg, response | mask);
     },
 
     clearBitMask: function (reg, mask) {
-        var response = this.read(reg);
-        this.write(reg, response & (~mask));
+        var response = this.readRegister(reg);
+        this.writeRegister(reg, response & (~mask));
     },
 
     antennaOn: function () {
-        var response = this.read(this.TxControlReg);
+        var response = this.readRegister(this.TxControlReg);
         if (~(response & 0x03) != 0) {
             this.setBitMask(this.TxControlReg, 0x03);
         }
@@ -158,7 +158,6 @@ module.exports = {
         var waitIRq = 0x00;
         var lastBits = null;
         var n = 0;
-        var i = 0;
         if (command == this.PCD_AUTHENT) {
             irqEn = 0x12;
             waitIRq = 0x10;
@@ -167,40 +166,39 @@ module.exports = {
             irqEn = 0x77;
             waitIRq = 0x30;
         }
-        this.write(this.CommIEnReg, irqEn | 0x80); //Interrupt request is enabled
+        this.writeRegister(this.CommIEnReg, irqEn | 0x80); //Interrupt request is enabled
         this.clearBitMask(this.CommIrqReg, 0x80); //Clears all interrupt request bits
         this.setBitMask(this.FIFOLevelReg, 0x80); //FlushBuffer=1, FIFO initialization
-        this.write(this.CommandReg, this.PCD_IDLE); //NO action;Cancel the current command	???
+        this.writeRegister(this.CommandReg, this.PCD_IDLE); // Stop calculating CRC for new content in the FIFO.
         //Write data to the FIFO
-        while (i < bitsToSend.length) {
-            this.write(this.FIFODataReg, bitsToSend[i]);
-            i++;
+        for (var i = 0; i < bitsToSend.length; i++) {
+            this.writeRegister(this.FIFODataReg, bitsToSend[i]);
         }
         //Excuting command
-        this.write(this.CommandReg, command);
+        this.writeRegister(this.CommandReg, command);
         if (command == this.PCD_TRANSCEIVE) {
             this.setBitMask(this.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
         }
         //Wait for the received data to complete
         i = 2000; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
-        while (true) {
-            n = this.read(this.CommIrqReg);
+        do
+        {
+            n = this.readRegister(this.CommIrqReg);
             i--;
-            if (~((i != 0) && ~(n & 0x01) && ~(n & waitIRq)) != 0) {
-                break;
-            }
         }
+        while ((i != 0) && !(n & 0x01) && !(n & waitIRq));
+
         this.clearBitMask(this.BitFramingReg, 0x80); //StartSend=0
         if (i != 0) {
-            if ((this.read(this.ErrorReg) & 0x1B) == 0x00) { //BufferOvfl Collerr CRCErr ProtecolErr
+            if ((this.readRegister(this.ErrorReg) & 0x1B) == 0x00) { //BufferOvfl Collerr CRCErr ProtecolErr
                 status = this.MI_OK;
-                if ((n & irqEn & 0x01) != 0) {
+                if (n & irqEn & 0x01) {
                     status = this.MI_NOTAGERR;
                 }
                 if (command == this.PCD_TRANSCEIVE) {
-                    n = this.read(this.FIFOLevelReg);
-                    lastBits = this.read(this.ControlReg) & 0x07;
-                    if (lastBits != 0) {
+                    n = this.readRegister(this.FIFOLevelReg);
+                    lastBits = this.readRegister(this.ControlReg) & 0x07;
+                    if (lastBits) {
                         bitSize = (n - 1) * 8 + lastBits;
                     }
                     else {
@@ -212,11 +210,9 @@ module.exports = {
                     if (n > this.MAX_LEN) {
                         n = this.MAX_LEN;
                     }
-                    i = 0;
                     //Reads the data received in the FIFO
-                    while (i < n) {
-                        data.push(this.read(this.FIFODataReg));
-                        i++;
+                    for (i = 0; i < n; i++) {
+                        data.push(this.readRegister(this.FIFODataReg));
                     }
                 }
             }
@@ -228,7 +224,7 @@ module.exports = {
     },
 
     request: function (reqMode) {
-        this.write(this.BitFramingReg, 0x07);
+        this.writeRegister(this.BitFramingReg, 0x07);
         var TagType = [];
         TagType.push(reqMode);
         var response = this.toCard(this.PCD_TRANSCEIVE, TagType);
@@ -239,7 +235,7 @@ module.exports = {
     },
 
     anticoll: function () {
-        this.write(this.BitFramingReg, 0x00);
+        this.writeRegister(this.BitFramingReg, 0x00);
         var uid = [];
         uid.push(this.PICC_ANTICOLL);
         uid.push(0x20);
@@ -248,18 +244,11 @@ module.exports = {
         var data = response.data;
         var bitSize = response.bitSize;
         if (status == this.MI_OK) {
-            var i = 0;
             var uidCheck = 0;
-            if (data.length == 5) {
-                while (i < 4) {
-                    uidCheck = uidCheck ^ data[i];
-                    i++;
-                }
-                if (uidCheck != data[i]) {
-                    status = this.MI_ERR;
-                }
+            for (var i = 0; i < 4; i++) {
+                uidCheck = uidCheck ^ data[i];
             }
-            else {
+            if (uidCheck != data[i]) {
                 status = this.MI_ERR;
             }
         }
@@ -267,28 +256,29 @@ module.exports = {
     },
 
     calculateCRC: function (data) {
-        this.clearBitMask(this.DivIrqReg, 0x04); //CRCIrq = 0
-        this.setBitMask(this.FIFOLevelReg, 0x80); //Clear FIFO pointer
-        var i = 0;
+        this.clearBitMask(this.DivIrqReg, 0x04); // Clear the CRCIRq interrupt request bit
+        this.setBitMask(this.FIFOLevelReg, 0x80); // FlushBuffer = 1, FIFO initialization
         //Write data to the FIFO
-        while (i < data.length) {
-            this.write(this.FIFODataReg, data[i]);
-            i++;
+        for (var i = 0; i < data.length; i++) {
+            this.writeRegister(this.FIFODataReg, data[i]);
         }
-        this.write(this.CommandReg, this.PCD_CALCCRC);
+        this.writeRegister(this.CommandReg, this.PCD_CALCCRC);
         //Wait for the CRC calculation to complete
         i = 0xFF;
         while (true) {
-            var n = this.read(this.DivIrqReg);
-            i--;
-            if (!((i != 0) && !((n & 0x04) != 0))) {
-                break
+            var n = this.readRegister(this.DivIrqReg);
+            if (n & 0x04) { // CRCIRq bit set - calculation done
+                break;
+            }
+            if (--i == 0) { // The emergency break. We will eventually terminate on this one after 89ms. Communication with the MFRC522 might be down.
+                console.log("CRC Timeout in communication.")
+                break;
             }
         }
         var crcBits = [];
         //CRC calculation result
-        crcBits.push(this.read(this.CRCResultRegL));
-        crcBits.push(this.read(this.CRCResultRegM));
+        crcBits.push(this.readRegister(this.CRCResultRegL));
+        crcBits.push(this.readRegister(this.CRCResultRegM));
         return crcBits;
     },
 
@@ -296,10 +286,8 @@ module.exports = {
         var buffer = [];
         buffer.push(this.PICC_SELECTTAG);
         buffer.push(0x70);
-        var i = 0;
-        while (i < 5) {
+        for (var i = 0; i < 5; i++) {
             buffer.push(uid[i]);
-            i++;
         }
         var crcBits = this.calculateCRC(buffer);
         buffer.push(crcBits[0]);
@@ -316,32 +304,25 @@ module.exports = {
         }
     },
 
-    auth: function (authMode, SectorAddress, SectorKey, uid) {
+    auth: function (authMode, address, sectorKey, uid) {
         var buffer = [];
         //# First byte should be the authMode (A or B)
         buffer.push(authMode);
         //# Second byte is the trailerBlock (usually 7)
-        buffer.push(SectorAddress);
+        buffer.push(address);
         //# Now we need to append the authKey which usually is 6 bytes of 0xFF
-        var i = 0;
-        while (i < SectorKey.length) {
-            buffer.push(SectorKey[i]);
-            i++;
+        for (var i = 0; i < sectorKey.length; i++) {
+            buffer.push(sectorKey[i]);
         }
-        i = 0;
         // Next we append the first 4 bytes of the UID
-        while (i < 4) {
-            buffer.push(uid[i]);
-            i++;
+        for (var j = 0; j < 4; j++) {
+            buffer.push(uid[j]);
         }
         // Now we start the authentication itself
         var response = this.toCard(this.PCD_AUTHENT, buffer);
         var status = response.status;
-        if (!(status == this.MI_OK)) {
-            console.log("Authentication Error");
-        }
-        if (!(this.read(this.Status2Reg) & 0x08) != 0) {
-            console.log("Authentication Error Status 2");
+        if ((status != this.MI_OK) || (!(this.readRegister(this.Status2Reg) & 0x08))) {
+            status = this.MI_ERR;
         }
         return status;
     },
@@ -350,10 +331,10 @@ module.exports = {
         this.clearBitMask(this.Status2Reg, 0x08);
     },
 
-    readDataFromSector: function (SectorAddress) {
+    readDataFromSector: function (address) {
         var request = [];
         request.push(this.PICC_READ);
-        request.push(SectorAddress);
+        request.push(address);
         var crcBits = this.calculateCRC(request);
         request.push(crcBits[0]);
         request.push(crcBits[1]);
@@ -361,19 +342,19 @@ module.exports = {
         var status = response.status;
         var data = response.data;
         var bitSize = response.bitSize;
-        if (!(status == this.MI_OK)) {
+        if ((status != this.MI_OK)) {
             console.log("Error while reading! Status: " + status + " Data: " + data + " BitSize: " + bitSize);
         }
         var i = 0;
         if (data.length == 16) {
-            console.log("SectorAddress: " + SectorAddress + " Data: " + data);
+            console.log("SectorAddress: " + address + " Data: " + data);
         }
     },
 
-    writeDataToSector: function (SectorAddress, sixteenBits) {
+    writeDataToSector: function (address, sixteenBits) {
         var buffer = [];
         buffer.push(this.PICC_WRITE);
-        buffer.push(SectorAddress);
+        buffer.push(address);
         var crc = this.calculateCRC(buffer);
         buffer.push(crc[0]);
         buffer.push(crc[1]);
@@ -381,16 +362,15 @@ module.exports = {
         var status = response.status;
         var data = response.data;
         var bitSize = response.bitSize;
-        if (!(status == this.MI_OK) || !(bitSize == 4) || !((data[0] & 0x0F) == 0x0A)) {
+        if ((status != this.MI_OK) || (bitSize != 4) || ((data[0] & 0x0F) != 0x0A)) {
             console.log("Error while writing! Status: " + status + " Data: " + data + " BitSize: " + bitSize);
+            status = this.MI_ERR;
         }
         if (status == this.MI_OK) {
-            var i = 0;
             buffer = [];
             // Write 16 bytes of data to the FIFO
-            while (i < 16) {
+            for (var i = 0; i < 16; i++) {
                 buffer.push(sixteenBits[i]);
-                i++;
             }
             crc = this.calculateCRC(buffer);
             buffer.push(crc[0]);
@@ -399,8 +379,9 @@ module.exports = {
             status = response.status;
             data = response.data;
             bitSize = response.bitSize;
-            if (!(status == this.MI_OK) || !(bitSize == 4) || !((data[0] & 0x0F) == 0x0A)) {
+            if ((status != this.MI_OK) || (bitSize != 4) || ((data[0] & 0x0F) != 0x0A)) {
                 console.log("Error while writing! Status: " + status + " Data: " + data + " BitSize: " + bitSize);
+                status = this.MI_ERR;
             }
             if (status == this.MI_OK) {
                 console.log("Data written successfully");
@@ -416,7 +397,7 @@ module.exports = {
                 this.readDataFromSector(i);
             }
             else {
-                console.log("Authentication error");
+                console.log("Authentication Error");
             }
             i++;
         }

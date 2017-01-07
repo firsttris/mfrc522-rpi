@@ -68,7 +68,7 @@ while (continueReading) {
             continueReading = false;
             console.log("finished successfully!");
         } else {
-            console.log("Authentication error");
+            console.log("Authentication Error");
         }
 
     }
