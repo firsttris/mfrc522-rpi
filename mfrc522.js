@@ -385,7 +385,7 @@ module.exports = {
                 this.readDataFromBlock(i);
             }
             else {
-                console.log("Authentication Error");
+                console.log("Authentication ERROR");
             }
             i++;
         }

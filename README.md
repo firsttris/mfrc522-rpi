@@ -12,7 +12,11 @@ Install the latest version via npm:
 ```
 npm install mfrc522-rpi
 ```
-
+# Scripts
+```
+sudo npm run read
+sudo npm run write
+```
 # Documentation
 Manufacturer documentation from the chip
 
