@@ -97,7 +97,7 @@ module.exports = {
     Reserved34: 0x3F,
 
 
-    init: function() {
+    init: function () {
         this.initRaspberryPi();
         this.initChip();
     },
@@ -184,6 +184,12 @@ module.exports = {
         this.clearRegisterBitMask(this.TxControlReg, 0x03);
     },
 
+    /**
+     * RC522 and ISO14443 card communication
+     * @param command - command - MF522 command word
+     * @param bitsToSend - sent to the card through the RC522 data
+     * @returns {{status: number, data: Array, bitSize: number}}
+     */
     toCard: function (command, bitsToSend) {
         var data = [];
         var bitSize = 0;
@@ -266,16 +272,20 @@ module.exports = {
      * 0x0200 = Mifare_One (S70)
      * 0x0800 = Mifare_Pro (X)
      * 0x4403 = Mifare_DESFire
-     * @returns {{status: *, data: Array, bitSize: *}}
+     * @returns {{status: *, bitSize: *}}
      */
     findCard: function () {
         this.writeRegister(this.BitFramingReg, 0x07);
-        var tagType = [this.PICC_REQIDL];
+        var tagType = [];
+        tagType.push(this.PICC_REQIDL);
         var response = this.toCard(this.PCD_TRANSCEIVE, tagType);
-        if ((response.status != this.MI_OK) || (response.bitSize != 0x10)) {
-            var status = this.MI_ERR;
+        var status = response.status;
+        var bitSize = response.bitSize;
+
+        if ((status != this.MI_OK) || (bitSize != 0x10)) {
+            status = this.MI_ERR;
         }
-        return {status: status, data: response.data, bitSize: response.bitSize};
+        return {status: status, bitSize: bitSize};
     },
 
     /**
@@ -319,16 +329,13 @@ module.exports = {
         this.writeRegister(this.CommandReg, this.PCD_CALCCRC);
         //Wait for the CRC calculation to complete
         i = 0xFF;
-        while (true) {
+        do
+        {
             var n = this.readRegister(this.DivIrqReg);
-            if (n & 0x04) { // CRCIRq bit set - calculation done
-                break;
-            }
-            if (--i == 0) { // The emergency break. We will eventually terminate on this one after 89ms. Communication with the MFRC522 might be down.
-                console.log("CRC Timeout in communication.")
-                break;
-            }
+            i--;
         }
+        while ((i != 0) && !(n & 0x04)); //CRCIrq = 1
+
         var crcBits = [];
         //CRC calculation result
         crcBits.push(this.readRegister(this.CRCResultRegL));
