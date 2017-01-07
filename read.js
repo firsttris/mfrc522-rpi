@@ -14,10 +14,10 @@ while (true) {
     var status = response.status;
     var tagType = response.bitSize;
 
-    //# If a card is found
     if (status == mfrc522.ERROR) {
         continue;
     }
+    //Card is found
     console.log("Card detected, CardType: " + tagType);
 
     //# Get the UID of the card
@@ -39,8 +39,17 @@ while (true) {
     //# Select the scanned tag
     mfrc522.selectCard(uid);
 
-    //# Dump the data
-    mfrc522.dumpCard(key, uid);
+    //# Authenticate
+    status = mfrc522.authenticate(8, key, uid);
+
+    //# Check if authenticated
+    if (status == mfrc522.ERROR) {
+        console.log("Authentication ERROR");
+        continue;
+    }
+
+    // Dump Block 8
+    mfrc522.readDataFromBlock(8);
 
     //# Stop
     mfrc522.stopCrypto();
