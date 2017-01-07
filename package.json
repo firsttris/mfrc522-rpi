@@ -5,7 +5,8 @@
   "main": "mfrc522.js",
   "scripts": {
     "read": "node read.js",
-    "write": "node write.js"
+    "write": "node write.js",
+    "dump": "node dumpCard.js"
   },
   "author": "Tristan Teufel",
   "license": "ISC",

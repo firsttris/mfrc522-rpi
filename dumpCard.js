@@ -38,17 +38,16 @@ while (true) {
     //# This is the default key for authentication
     var key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
-    //# Authenticate on BlockAdress 8 with key and uid
-    status = mfrc522.authenticate(8, key, uid);
-
-    //# Check if authenticated
-    if (status == mfrc522.ERROR) {
-        console.log("Authentication ERROR");
-        continue;
+    //# dump RFID chip memory
+    for (var i = 0; i < 64; i++) {
+        var status = mfrc522.authenticate(i, key, uid);
+        if (status) {
+            mfrc522.readDataFromBlock(i);
+        }
+        else {
+            console.log("Authentication ERROR");
+        }
     }
-
-    //# Dump BlockAdress 8
-    mfrc522.readDataFromBlock(8);
 
     //# Stop
     mfrc522.stopCrypto();

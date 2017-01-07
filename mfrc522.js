@@ -2,8 +2,8 @@ var CMD = require("./mfrc522-commands");
 
 module.exports = {
     NRSTPD: 25, /// GPIO 25
-    OK: 0,
-    ERROR: 2,
+    OK: true,
+    ERROR: false,
 
     init: function () {
         this.initRaspberryPi();
@@ -96,7 +96,7 @@ module.exports = {
      * RC522 and ISO14443 card communication
      * @param command - command - MF522 command word
      * @param bitsToSend - sent to the card through the RC522 data
-     * @returns {{status: number, data: Array, bitSize: number}}
+     * @returns {{status: boolean, data: Array, bitSize: number}}
      */
     toCard: function (command, bitsToSend) {
         var data = [];
@@ -184,16 +184,12 @@ module.exports = {
      */
     findCard: function () {
         this.writeRegister(CMD.BitFramingReg, 0x07);
-        var tagType = [];
-        tagType.push(CMD.PICC_REQIDL);
+        var tagType = [CMD.PICC_REQIDL];
         var response = this.toCard(CMD.PCD_TRANSCEIVE, tagType);
-        var status = response.status;
-        var bitSize = response.bitSize;
-
-        if ((status != this.OK) || (bitSize != 0x10)) {
-            status = this.ERROR;
+        if (response.bitSize != 0x10) {
+            response.status = this.ERROR;
         }
-        return {status: status, bitSize: bitSize};
+        return {status: response.status, bitSize: response.bitSize};
     },
 
     /**
@@ -203,23 +199,18 @@ module.exports = {
      */
     getUid: function () {
         this.writeRegister(CMD.BitFramingReg, 0x00);
-        var uid = [];
-        uid.push(CMD.PICC_ANTICOLL);
-        uid.push(0x20);
+        var uid = [CMD.PICC_ANTICOLL, 0x20];
         var response = this.toCard(CMD.PCD_TRANSCEIVE, uid);
-        var status = response.status;
-        var data = response.data;
-        var bitSize = response.bitSize;
-        if (status == this.OK) {
+        if (response.status) {
             var uidCheck = 0;
             for (var i = 0; i < 4; i++) {
-                uidCheck = uidCheck ^ data[i];
+                uidCheck = uidCheck ^ response.data[i];
             }
-            if (uidCheck != data[i]) {
-                status = this.ERROR;
+            if (uidCheck != response.data[i]) {
+                response.status = this.ERROR;
             }
         }
-        return {status: status, data: data, bitSize: bitSize};
+        return {status: response.status, data: response.data};
     },
 
     /**
@@ -243,58 +234,44 @@ module.exports = {
             i--;
         }
         while ((i != 0) && !(n & 0x04)); //CRCIrq = 1
-
-        var crcBits = [];
         //CRC calculation result
-        crcBits.push(this.readRegister(CMD.CRCResultRegL));
-        crcBits.push(this.readRegister(CMD.CRCResultRegM));
-        return crcBits;
+        return [this.readRegister(CMD.CRCResultRegL), this.readRegister(CMD.CRCResultRegM)];
     },
 
     /**
-     * Select card, read card memory capacity
+     * Select card by, returns card memory capacity
      * @param uid
      * @returns {*}
      */
     selectCard: function (uid) {
-        var buffer = [];
-        buffer.push(CMD.PICC_SELECTTAG);
-        buffer.push(0x70);
+        var buffer = [CMD.PICC_SELECTTAG, 0x70];
         for (var i = 0; i < 5; i++) {
             buffer.push(uid[i]);
         }
-        var crcBits = this.calculateCRC(buffer);
-        buffer.push(crcBits[0]);
-        buffer.push(crcBits[1]);
+        buffer = buffer.concat(this.calculateCRC(buffer));
         var response = this.toCard(CMD.PCD_TRANSCEIVE, buffer);
-        var status = response.status;
-        var data = response.data;
-        var bitSize = response.bitSize;
-        if (status == this.OK && bitSize == 0x18) {
-            return data[0];
+        var memoryCapacity = 0;
+        if (response.status && response.bitSize == 0x18) {
+            memoryCapacity = response.data[0];
         }
-        else {
-            return 0;
-        }
+        return memoryCapacity;
     },
 
     /**
      * Verify the card password
-     * authMode - password authentication mode
-     *            0x60 = Verify the A key
-     *            0x61 = Verify the B key
      * @param address - block address
      * @param key - password for block
      * @param uid - card serial number, 4 bytes
      * @returns {*}
      */
     authenticate: function (address, key, uid) {
-        var buffer = [];
-        //# First byte should be the authMode (A or B)
-        buffer.push(CMD.PICC_AUTHENT1A);
-        //# Second byte is the trailerBlock (usually 7)
-        buffer.push(address);
-        //# Now we need to append the authKey which usually is 6 bytes of 0xFF
+        /* first byte is password authentication mode (A or B)
+         * 0x60 = Verify the A key
+         * 0x61 = Verify the B key
+         * Second byte is the block address
+         */
+        var buffer = [CMD.PICC_AUTHENT1A, address];
+        // Now we append the authKey which is by default 6 bytes of 0xFF
         for (var i = 0; i < key.length; i++) {
             buffer.push(key[i]);
         }
@@ -304,11 +281,10 @@ module.exports = {
         }
         // Now we start the authentication itself
         var response = this.toCard(CMD.PCD_AUTHENT, buffer);
-        var status = response.status;
-        if ((status != this.OK) || (!(this.readRegister(CMD.Status2Reg) & 0x08))) {
-            status = this.ERROR;
+        if (!(this.readRegister(CMD.Status2Reg) & 0x08)) {
+            response.status = this.ERROR;
         }
-        return status;
+        return response.status;
     },
 
     stopCrypto: function () {
@@ -316,78 +292,42 @@ module.exports = {
     },
 
     readDataFromBlock: function (address) {
-        var request = [];
-        request.push(CMD.PICC_READ);
-        request.push(address);
-        var crcBits = this.calculateCRC(request);
-        request.push(crcBits[0]);
-        request.push(crcBits[1]);
+        var request = [CMD.PICC_READ, address];
+        request = request.concat(this.calculateCRC(request));
         var response = this.toCard(CMD.PCD_TRANSCEIVE, request);
-        var status = response.status;
-        var data = response.data;
-        var bitSize = response.bitSize;
-        if ((status != this.OK)) {
-            console.log("Error while reading! Status: " + status + " Data: " + data + " BitSize: " + bitSize);
+        if (!response.status) {
+            console.log("Error while reading! Status: " + response.status + " Data: " + response.data + " BitSize: " + response.bitSize);
         }
-        if (data.length == 16) {
-            console.log("SectorAddress: " + address + " Data: " + data);
+        if (response.data.length == 16) {
+            console.log("SectorAddress: " + address + " Data: " + response.data);
         }
+    },
+
+    appendCRCtoBufferAndSendToCard: function (buffer) {
+        buffer = buffer.concat(this.calculateCRC(buffer));
+        var response = this.toCard(CMD.PCD_TRANSCEIVE, buffer);
+        if ((!response.status) || (response.bitSize != 4) || ((response.data[0] & 0x0F) != 0x0A)) {
+            console.log("Error while writing! Status: " + response.status + " Data: " + response.data + " BitSize: " + response.bitSize);
+            response.status = this.ERROR;
+        }
+        return response;
     },
 
     writeDataToBlock: function (address, sixteenBits) {
         var buffer = [];
         buffer.push(CMD.PICC_WRITE);
         buffer.push(address);
-        var crc = this.calculateCRC(buffer);
-        buffer.push(crc[0]);
-        buffer.push(crc[1]);
-        var response = this.toCard(CMD.PCD_TRANSCEIVE, buffer);
-        var status = response.status;
-        var data = response.data;
-        var bitSize = response.bitSize;
-        if ((status != this.OK) || (bitSize != 4) || ((data[0] & 0x0F) != 0x0A)) {
-            console.log("Error while writing! Status: " + status + " Data: " + data + " BitSize: " + bitSize);
-            status = this.ERROR;
-        }
-        if (status == this.OK) {
+        var response = this.appendCRCtoBufferAndSendToCard(buffer);
+        if (response.status) {
             buffer = [];
             // Write 16 bytes of data to the FIFO
             for (var i = 0; i < 16; i++) {
                 buffer.push(sixteenBits[i]);
             }
-            crc = this.calculateCRC(buffer);
-            buffer.push(crc[0]);
-            buffer.push(crc[1]);
-            response = this.toCard(CMD.PCD_TRANSCEIVE, buffer);
-            status = response.status;
-            data = response.data;
-            bitSize = response.bitSize;
-            if ((status != this.OK) || (bitSize != 4) || ((data[0] & 0x0F) != 0x0A)) {
-                console.log("Error while writing! Status: " + status + " Data: " + data + " BitSize: " + bitSize);
-                status = this.ERROR;
-            }
-            if (status == this.OK) {
+            response = this.appendCRCtoBufferAndSendToCard(buffer);
+            if (response.status) {
                 console.log("Data written successfully");
             }
-        }
-    },
-
-    /**
-     * dump card
-     * @param key
-     * @param uid
-     */
-    dumpCard: function (key, uid) {
-        var i = 0;
-        while (i < 64) {
-            var status = this.authenticate(i, key, uid);
-            if (status == this.OK) {
-                this.readDataFromBlock(i);
-            }
-            else {
-                console.log("Authentication ERROR");
-            }
-            i++;
         }
     }
 };

@@ -16,7 +16,7 @@ while (continueReading) {
     var tagType = response.bitSize;
 
     //# If a card is found
-    if (status == mfrc522.ERROR) {
+    if (!status) {
         continue;
     }
     console.log("Card detected, CardType: " + tagType);
@@ -27,7 +27,7 @@ while (continueReading) {
     var uid = response.data;
 
     //# If we have the UID, continue
-    if (status == mfrc522.ERROR) {
+    if (!status) {
         console.log("UID Scan ERROR");
         continue;
     }
@@ -39,13 +39,14 @@ while (continueReading) {
     var key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
     //# Select the scanned tag
-    mfrc522.selectCard(uid);
+    var memoryCapacity = mfrc522.selectCard(uid);
+    console.log("Card Memory Capacity: "+memoryCapacity);
 
     //# Authenticate
     status = mfrc522.authenticate(8, key, uid);
 
     //# Check if authenticated
-    if (status == mfrc522.ERROR) {
+    if (!status) {
         console.log("Authentication ERROR");
         continue;
     }
@@ -74,6 +75,5 @@ while (continueReading) {
 
     continueReading = false;
     console.log("finished successfully!");
-
 
 }
