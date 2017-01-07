@@ -13,7 +13,7 @@ while (true) {
     var tagType = response.bitSize;
 
     //# If a card is found
-    if (status == mfrc522.MI_OK) {
+    if (status == mfrc522.OK) {
         console.log("Card detected, CardType: "+tagType);
 
         //# Get the UID of the card
@@ -22,7 +22,7 @@ while (true) {
         var uid = response.data;
 
         //# If we have the UID, continue
-        if (status == mfrc522.MI_OK) {
+        if (status == mfrc522.OK) {
             //# Print UID
             console.log("Card read UID: %s %s %s %s", uid[0].toString(16), uid[1].toString(16), uid[2].toString(16), uid[3].toString(16));
 
