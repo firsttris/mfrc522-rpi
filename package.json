@@ -1,13 +1,18 @@
 {
   "name": "mfrc522-rpi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "JavaScript Interface to Control RFID reader Module MFRC522 with Raspberry Pi in nodeJs",
   "main": "mfrc522.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "read": "node read.js",
+    "write": "node write.js"
   },
   "author": "Tristan Teufel",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firsttris/mfrc522-rpi.git"
+  },
   "dependencies": {
     "wiring-pi": "^2.2.1"
   }
