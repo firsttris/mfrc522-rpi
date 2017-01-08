@@ -1,56 +1,50 @@
-var mfrc522 = require("./mfrc522");
-
-mfrc522.init();
+"use strict";
+const mfrc522 = new (require("./mfrc522"))();
+let continueReading = true;
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
-console.log("scanning...")
+console.log("scanning...");
 console.log("Please put chip or keycard in the antenna inductive zone!");
 console.log("Press Ctrl-C to stop.");
 
-while (true) {
+while (continueReading) {
 
     //# Scan for cards
-    var response = mfrc522.findCard();
-    var status = response.status;
-    var tagType = response.bitSize;
+    let response = mfrc522.findCard();
 
-    if (status == mfrc522.ERROR) {
+    if (!response.status) {
         continue;
     }
     //# Card is found
-    console.log("Card detected, CardType: " + tagType);
+    console.log("Card detected, CardType: " + response.bitSize);
 
     //# Get the UID of the card
     response = mfrc522.getUid();
-    status = response.status;
-    var uid = response.data;
-
-    if (status == mfrc522.ERROR) {
-        console.log("UID Scan ERROR");
+    if (!response.status) {
+        console.log("UID Scan Error");
         continue;
     }
     //# If we have the UID, continue
+    const uid = response.data;
     console.log("Card read UID: %s %s %s %s", uid[0].toString(16), uid[1].toString(16), uid[2].toString(16), uid[3].toString(16));
 
     //# Select the scanned card
     mfrc522.selectCard(uid);
 
     //# This is the default key for authentication
-    var key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+    const key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
     //# dump RFID chip memory
-    for (var i = 0; i < 64; i++) {
-        var status = mfrc522.authenticate(i, key, uid);
-        if (status) {
-            mfrc522.readDataFromBlock(i);
-        }
-        else {
-            console.log("Authentication ERROR");
+    for (let i = 0; i < 64; i++) {
+        if (mfrc522.authenticate(i, key, uid)) {
+            console.log("Block: "+i+" Data: "+mfrc522.getDataForBlock(i));
+        } else {
+            console.log("Authentication Error");
+            break;
         }
     }
 
     //# Stop
     mfrc522.stopCrypto();
-
 
 }

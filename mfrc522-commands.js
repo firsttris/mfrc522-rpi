@@ -1,3 +1,4 @@
+"use strict";
 module.exports = {
     PCD_IDLE: 0x00,
     PCD_AUTHENT: 0x0E,
