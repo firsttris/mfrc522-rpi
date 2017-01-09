@@ -1,11 +1,14 @@
 # mfrc522-rpi
 
-JavaScript interface to control RFID reader MFRC522 with Raspberry-Pi in nodeJs.
+:key: lightweight JavaScript interface to control RFID reader MFRC522 with Raspberry-pi
 
-Example how to read & write data with MFRC522
+###Features
+- RC522 and ISO14443 card communication
+- Read UID & card memory (64Bit)
+- Write card memory & card key
+
 
 ### Install
-
 Install the latest version via npm:
 
 *Can only be installed on rpi, through dependency to wiring-pi*
@@ -16,13 +19,14 @@ Install the latest version via npm:
 npm install mfrc522-rpi
 ```
 ### Basic Usage
-find examples in /test directory
+Find basic examples in "test" directory
 
 ### Scripts
-see package.json
+run basic examples
 ```
 sudo npm run read
 sudo npm run write
+sudo npm run dumpCard
 ```
 
 ### Documentation
