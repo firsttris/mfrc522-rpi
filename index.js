@@ -1,5 +1,6 @@
 "use strict";
 const CMD = require("./commands");
+const WiringPi = require("wiring-pi");
 
 class MFRC522 {
 
@@ -7,22 +8,18 @@ class MFRC522 {
         this.NRSTPD = 25; /// GPIO 25
         this.OK = true;
         this.ERROR = false;
-        this.initRaspberryPi();
-        this.initChip();
-    }
-
-    initRaspberryPi () {
-        this.wpi = require("wiring-pi");
+        this.wpi = WiringPi;
         this.wpi.wiringPiSPISetup(0, 1000000);
         this.wpi.setup("gpio");
         this.wpi.pinMode(this.NRSTPD, this.wpi.OUTPUT);
         this.wpi.digitalWrite(this.NRSTPD, this.wpi.HIGH);
+        this.init();
     }
 
     /**
      * Initializes the MFRC522 chip.
      */
-    initChip () {
+    init () {
         this.reset();
         this.writeRegister(CMD.TModeReg, 0x8D); // TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
         this.writeRegister(CMD.TPrescalerReg, 0x3E); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
