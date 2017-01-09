@@ -1,5 +1,5 @@
 "use strict";
-const mfrc522 = new (require("./mfrc522"))();
+const mfrc522 = new (require("./../index"))();
 let continueReading = true;
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
@@ -19,19 +19,19 @@ while (continueReading) {
     //# Get the UID of the card
     response = mfrc522.getUid();
     if (!response.status) {
-        console.log("UID Scan ERROR");
+        console.log("UID Scan Error");
         continue;
     }
     //# If we have the UID, continue
     const uid = response.data;
     console.log("Card read UID: %s %s %s %s", uid[0].toString(16), uid[1].toString(16), uid[2].toString(16), uid[3].toString(16));
 
-    //# This is the default key for authentication
-    const key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
-
-    //# Select the scanned tag
+    //# Select the scanned card
     const memoryCapacity = mfrc522.selectCard(uid);
     console.log("Card Memory Capacity: " + memoryCapacity);
+
+    //# This is the default key for authentication
+    const key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
     //# Authenticate on Block 8 with key and uid
     if (!mfrc522.authenticate(8, key, uid)) {
@@ -39,29 +39,11 @@ while (continueReading) {
         continue;
     }
 
-    //# Variable for the data to write
-    let data = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+    //# Dump Block 8
+    console.log("Block: 8 Data: " + mfrc522.getDataForBlock(8));
 
-    console.log("Block 8 looked like this:");
-    console.log(mfrc522.getDataForBlock(8));
-
-    console.log("Block 8 will be filled with 0xFF:");
-    mfrc522.writeDataToBlock(8, data);
-
-    console.log("Now Block 8 looks like this:");
-    console.log(mfrc522.getDataForBlock(8));
-
-    data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-
-    console.log("Now we fill it with 16 x 0");
-    mfrc522.writeDataToBlock(8, data);
-
-    console.log("It is now empty:");
-    console.log(mfrc522.getDataForBlock(8));
-
+    //# Stop
     mfrc522.stopCrypto();
 
-    continueReading = false;
-    console.log("finished successfully!");
 
 }

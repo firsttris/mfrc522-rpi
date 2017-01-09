@@ -1,13 +1,23 @@
 {
   "name": "mfrc522-rpi",
-  "version": "1.0.4",
-  "description": "JavaScript Interface to Control RFID reader Module MFRC522 with Raspberry Pi in nodeJs",
-  "main": "mfrc522.js",
+  "version": "1.0.5",
+  "description": "small JavaScript interface to control RFID reader MFRC522 with Raspberry-pi",
+  "main": "index.js",
   "scripts": {
-    "read": "node read.js",
-    "write": "node write.js",
-    "dump": "node dumpCard.js"
+    "read": "node test/read.js",
+    "write": "node test/write.js",
+    "dump": "node test/dumpCard.js"
   },
+  "keywords": [
+    "mfrc522",
+    "rfid",
+    "nfc",
+    "rpi",
+    "internet-of-things",
+    "iot",
+    "javascript",
+    "nodejs"
+  ],
   "author": "Tristan Teufel",
   "license": "ISC",
   "repository": {

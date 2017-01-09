@@ -1,7 +1,7 @@
 "use strict";
-const CMD = require("./mfrc522-commands");
+const CMD = require("./commands");
 
-class mfrc522 {
+class MFRC522 {
 
     constructor () {
         this.NRSTPD = 25; /// GPIO 25
@@ -333,4 +333,4 @@ class mfrc522 {
 
 }
 
-module.exports = mfrc522;
+module.exports = MFRC522;

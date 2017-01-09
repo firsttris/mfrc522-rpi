@@ -1,5 +1,5 @@
 "use strict";
-const mfrc522 = new (require("./mfrc522"))();
+const mfrc522 = new (require("./../index"))();
 let continueReading = true;
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
@@ -11,11 +11,9 @@ while (continueReading) {
 
     //# Scan for cards
     let response = mfrc522.findCard();
-
     if (!response.status) {
         continue;
     }
-    //# Card is found
     console.log("Card detected, CardType: " + response.bitSize);
 
     //# Get the UID of the card
@@ -34,7 +32,7 @@ while (continueReading) {
     //# This is the default key for authentication
     const key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
-    //# dump RFID chip memory
+    //# dump 64 bit fifo buffer
     for (let i = 0; i < 64; i++) {
         if (mfrc522.authenticate(i, key, uid)) {
             console.log("Block: "+i+" Data: "+mfrc522.getDataForBlock(i));

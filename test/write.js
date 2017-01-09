@@ -1,5 +1,5 @@
 "use strict";
-const mfrc522 = new (require("./mfrc522"))();
+const mfrc522 = new (require("./../index"))();
 let continueReading = true;
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
@@ -14,7 +14,6 @@ while (continueReading) {
     if (!response.status) {
         continue;
     }
-    //# Card is found
     console.log("Card detected, CardType: " + response.bitSize);
 
     //# Get the UID of the card
@@ -40,11 +39,29 @@ while (continueReading) {
         continue;
     }
 
-    //# Dump Block 8
-    console.log("Block: 8 Data: " + mfrc522.getDataForBlock(8));
+    //# Variable for the data to write
+    let data = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
-    //# Stop
+    console.log("Block 8 looked like this:");
+    console.log(mfrc522.getDataForBlock(8));
+
+    console.log("Block 8 will be filled with 0xFF:");
+    mfrc522.writeDataToBlock(8, data);
+
+    console.log("Now Block 8 looks like this:");
+    console.log(mfrc522.getDataForBlock(8));
+
+    data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+
+    console.log("Now we fill it with 16 x 0");
+    mfrc522.writeDataToBlock(8, data);
+
+    console.log("It is now empty:");
+    console.log(mfrc522.getDataForBlock(8));
+
     mfrc522.stopCrypto();
 
+    continueReading = false;
+    console.log("finished successfully!");
 
 }
