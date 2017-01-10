@@ -7,14 +7,13 @@
 - Read UID & card memory (64Bit)
 - Write card memory & card key
 
-
 ### Install
 Install the latest version via npm:
 
 *Can only be installed on rpi, through dependency to wiring-pi*
 
 [![npm version](https://badge.fury.io/js/mfrc522-rpi.svg)](https://badge.fury.io/js/mfrc522-rpi)
-[![Dependency Status](https://david-dm.org/firsttris/mfrc522-rpi.svg)](https://david-dm.org/firsttris/mfrc522-rpi) 
+
 ```
 npm install mfrc522-rpi
 ```
