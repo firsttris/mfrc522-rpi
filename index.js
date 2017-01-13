@@ -35,7 +35,7 @@ class MFRC522 {
     }
 
     /**
-     * Writes a byte to the specified register in the MFRC522 chip.
+     * Writes a bit to the specified register in the MFRC522 chip.
      * The interface is described in the datasheet section 8.1.2.
      * @param addr
      * @param val
@@ -47,7 +47,7 @@ class MFRC522 {
     }
 
     /**
-     * Reads a byte from the specified register in the MFRC522 chip.
+     * Reads a bit from the specified register in the MFRC522 chip.
      * The interface is described in the datasheet section 8.1.2.
      * @param addr
      * @returns {*}
@@ -192,7 +192,7 @@ class MFRC522 {
 
     /**
      * Anti-collision detection, get uid (serial number) of found card
-     * 4-byte card to return the serial number, the first five bytes for the check byte
+     * 4-bit card to return the serial number, the first five bit for the check bit
      * @returns {{status: *, data: Array, bitSize: *}}
      */
     getUid () {
@@ -258,23 +258,25 @@ class MFRC522 {
 
     /**
      * Verify the card password
+     * Auth at Block N+1 with Key from Block N
+     * Examle: Block 7 has Credentials from Block 8, in Block 7 there are 2 Keys A and B
      * @param address - block address
      * @param key - password for block
-     * @param uid - card serial number, 4 bytes
+     * @param uid - card serial number, 4 bit
      * @returns {*}
      */
     authenticate (address, key, uid) {
-        /* first byte is password authentication mode (A or B)
-         * 0x60 = Verify the A key
-         * 0x61 = Verify the B key
-         * Second byte is the block address
+        /* Password authentication mode (A or B)
+         * 0x60 = Verify the A key are the first 6 bit
+         * 0x61 = Verify the B key are the last 6 bit
+         * Second bit is the block address
          */
         let buffer = [CMD.PICC_AUTHENT1A, address];
-        // Now we append the authKey which is by default 6 bytes of 0xFF
+        // Key default 6 bit of 0xFF
         for (let i = 0; i < key.length; i++) {
             buffer.push(key[i]);
         }
-        // Next we append the first 4 bytes of the UID
+        // Next we append the first 4 bit of the UID
         for (let j = 0; j < 4; j++) {
             buffer.push(uid[j]);
         }
@@ -317,7 +319,7 @@ class MFRC522 {
         let response = this.appendCRCtoBufferAndSendToCard(buffer);
         if (response.status) {
             buffer = [];
-            // Write 16 bytes of data to the FIFO
+            // Write 16 bit of data to the FIFO
             for (let i = 0; i < 16; i++) {
                 buffer.push(sixteenBits[i]);
             }
