@@ -2,11 +2,12 @@
 
 :key: JavaScript class to control MFRC522 RFID Module with your Raspberry-pi
 
-MFRC522 is completely integrated in all types of <b>13.56MHz RFID</b> passive contactless communication methods and protocols.
+MFRC522 is integrated in all types of <b>13.56MHz RFID</b> passive contactless communication methods and protocols.
 
 
-It uses the ISO14443 specification to communicate with all types of MIFARE cards (also known as <b>NTAG, NFC</b>)
-
+It uses the ISO14443 specification to communicate to MIFARE cards (also known as <b>NTAG, NFC</b>)
+[MIFARE wiki](https://en.wikipedia.org/wiki/MIFARE)
+[ISO14443 wiki](https://de.wikipedia.org/wiki/ISO/IEC_14443)
 
 ###Features
 - Read uid & card memory
@@ -35,28 +36,20 @@ sudo npm run dumpCard
 
 #### Example
 
-On your NFC Chip are key and data register (see card register)
+On your NFC Chip are key and data register (see card register). Block 7 is a key register
+It contains the keys for data register 8, 9, 10. There are 2 keys located in block 7:
 
-Block 7 is a key register
-It contains the keys for data register 8, 9, 10
+- KEY B: first 6 bit of block 7 - in hex: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
+- KEY A: last 6 bit of block 7 - in hex: 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+- Accessbits: 4 bits in the middle - in decemial: 255, 7, 128, 105
 
-There are 2 keys located in block 7
+You can authenticate on block 8, 9, 10 with the key's from block 7
 
-KEY B: first 6 bit of block 7 - in hex 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
-
-(6 x 0 in decimal values)
-
-KEY A: last 6 bit of block 7 - in hex 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-
-(6 x 255 in decimal values)
-
-You can authenticate on Block 8, 9, 10 with the key's from Block 7
-
-My module is configured to only authenticate with Key A.
+The module is configured to authenticate only with Key A.
 
 ### Card Register
 
-FIFO Buffer Contains 64 byte
+64 byte
 
 ```
 Block: 0 Data: 89,229,151,26,49,8,4,0,98,99,100,101,102,103,104,105
