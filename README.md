@@ -49,7 +49,7 @@ The module is configured to authenticate only with Key A.
 
 ### Card Register
 
-64 byte
+Physical memory content of the chip/card which was included on the RFID-RC522 Module
 
 ```
 Block: 0 Data: 89,229,151,26,49,8,4,0,98,99,100,101,102,103,104,105
@@ -123,9 +123,18 @@ Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 Authenticate on block 7 with key from block 7, write new key to block.
 
 ### Documentation
-Manufacturer documentation
+Manufacturer documentation of MFRC522
 
 [MFRC522-Doc.pdf](https://www.nxp.com/documents/data_sheet/MFRC522.pdf)
+
+
+###NTAG (NXP213)
+
+[about NFC-TAG types](http://www.nfc-tag-shop.de/info/ueber-nfc-tags/nfc-tag-typen.html)
+
+[ebay link](http://www.ebay.de/itm/121594983773?_trksid=p2060353.m2749.l2649)
+
+[NTAG213_215_216.pdf](https://www.nxp.com/documents/data_sheet/NTAG213_215_216.pdf)
 
 ###Sources
 

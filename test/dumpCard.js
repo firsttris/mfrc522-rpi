@@ -1,18 +1,17 @@
 "use strict";
 const mfrc522 = new (require("./../index"))();
-let continueReading = true;
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
 console.log("scanning...");
 console.log("Please put chip or keycard in the antenna inductive zone!");
 console.log("Press Ctrl-C to stop.");
 
-while (continueReading) {
+setInterval(function(){
 
     //# Scan for cards
     let response = mfrc522.findCard();
     if (!response.status) {
-        continue;
+        return;
     }
     console.log("Card detected, CardType: " + response.bitSize);
 
@@ -20,21 +19,23 @@ while (continueReading) {
     response = mfrc522.getUid();
     if (!response.status) {
         console.log("UID Scan Error");
-        continue;
+        return;
     }
     //# If we have the UID, continue
     const uid = response.data;
     console.log("Card read UID: %s %s %s %s", uid[0].toString(16), uid[1].toString(16), uid[2].toString(16), uid[3].toString(16));
 
     //# Select the scanned card
-    mfrc522.selectCard(uid);
+    const memoryCapacity = mfrc522.selectCard(uid);
+    console.log("Card Memory Capacity: " + memoryCapacity);
 
     //# This is the default key for authentication
-    const key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+    const keyA = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+    const keyB = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 
     //# dump 64 bit fifo buffer
     for (let i = 0; i < 64; i++) {
-        if (mfrc522.authenticate(i, key, uid)) {
+        if (mfrc522.authenticate(i, keyA, uid)) {
             console.log("Block: "+i+" Data: "+mfrc522.getDataForBlock(i));
         } else {
             console.log("Authentication Error");
@@ -45,4 +46,4 @@ while (continueReading) {
     //# Stop
     mfrc522.stopCrypto();
 
-}
+}, 500);

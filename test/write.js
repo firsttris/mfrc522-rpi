@@ -1,18 +1,17 @@
 "use strict";
 const mfrc522 = new (require("./../index"))();
-let continueReading = true;
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
 console.log("scanning...");
 console.log("Please put chip or keycard in the antenna inductive zone!");
 console.log("Press Ctrl-C to stop.");
 
-while (continueReading) {
+setInterval(function(){
 
     //# Scan for cards
     let response = mfrc522.findCard();
     if (!response.status) {
-        continue;
+        return;
     }
     console.log("Card detected, CardType: " + response.bitSize);
 
@@ -20,7 +19,7 @@ while (continueReading) {
     response = mfrc522.getUid();
     if (!response.status) {
         console.log("UID Scan Error");
-        continue;
+        return;
     }
     //# If we have the UID, continue
     const uid = response.data;
@@ -36,7 +35,7 @@ while (continueReading) {
     //# Authenticate on Block 8 with key and uid
     if (!mfrc522.authenticate(8, key, uid)) {
         console.log("Authentication Error");
-        continue;
+        return;
     }
 
     //# Variable for the data to write
@@ -61,7 +60,7 @@ while (continueReading) {
 
     mfrc522.stopCrypto();
 
-    continueReading = false;
     console.log("finished successfully!");
 
-}
+
+}, 500);
