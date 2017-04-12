@@ -9,11 +9,11 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 [MIFARE wiki](https://en.wikipedia.org/wiki/MIFARE)
 [ISO14443 wiki](https://de.wikipedia.org/wiki/ISO/IEC_14443)
 
-### Features
+## Features
 - Read uid & card memory
 - Write card memory & card key
 
-### Install
+## Install
 Install the latest version via npm:
 
 *Can only be installed on rpi, through dependency to wiring-pi*
@@ -23,10 +23,10 @@ Install the latest version via npm:
 ```
 npm install mfrc522-rpi
 ```
-### Basic Usage
+## Basic Usage
 Find basic examples in "test" directory
 
-### Scripts
+## Scripts
 run basic examples
 ```
 sudo npm run read
@@ -34,7 +34,7 @@ sudo npm run write
 sudo npm run dumpCard
 ```
 
-#### Example
+## Example
 
 On your NFC Chip are key and data register (see card register). Block 7 is a key register
 It contains the keys for data register 8, 9, 10. There are 2 keys located in block 7:
@@ -122,7 +122,7 @@ Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 (not tested)
 Authenticate on block 7 with key from block 7, write new key to block.
 
-### Documentation
+## Documentation
 Manufacturer documentation of MFRC522
 
 [MFRC522-Doc.pdf](https://www.nxp.com/documents/data_sheet/MFRC522.pdf)
@@ -150,3 +150,6 @@ https://github.com/mxgxw/MFRC522-python
 ![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/RC522.jpg)
 
 Link to Amazon (Germany): [Link](https://www.amazon.de/dp/B00QFDRPZY/ref=cm_sw_r_tw_dp_x_.zoCybA5MAYZ0)
+
+## License
+[MIT](http://opensource.org/licenses/MIT)
