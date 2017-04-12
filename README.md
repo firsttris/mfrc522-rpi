@@ -152,4 +152,4 @@ https://github.com/mxgxw/MFRC522-python
 Link to Amazon (Germany): [Link](https://www.amazon.de/dp/B00QFDRPZY/ref=cm_sw_r_tw_dp_x_.zoCybA5MAYZ0)
 
 ## License
-[MIT](http://opensource.org/licenses/MIT)
+See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
