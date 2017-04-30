@@ -1,6 +1,6 @@
 "use strict";
 const CMD = require("./commands");
-const WiringPi = require("wiring-pi");
+const WiringPi = require("wiringpi-node");
 
 class MFRC522 {
 
