@@ -1,5 +1,7 @@
 "use strict";
-const mfrc522 = new (require("./../index"))();
+const mfrc522 = require("./../index");
+//# Init Chip
+mfrc522.init();
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
 console.log("scanning...");

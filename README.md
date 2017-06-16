@@ -23,18 +23,24 @@ Install the latest version via npm:
 ```
 npm install mfrc522-rpi
 ```
-## Basic Usage
-Find basic examples in "test" directory
+## Usage
 
-## Scripts
-run basic examples
 ```
-sudo npm run read
-sudo npm run write
-sudo npm run dumpCard
-```
+# read uid
+node /node_modules/mfrc522-rpi/test/read.js
 
-## Example
+# dump card
+node /node_modules/mfrc522-rpi/test/dumpCard.js
+
+# dump NTAG213 (sticker)
+node /node_modules/mfrc522-rpi/test/dumpNTAG213.js
+
+# write card
+node /node_modules/mfrc522-rpi/test/write.js
+```
+Find examples in "test" directory
+
+### Card Register
 
 On your NFC Chip are key and data register (see card register). Block 7 is a key register
 It contains the keys for data register 8, 9, 10. There are 2 keys located in block 7:
@@ -47,7 +53,7 @@ You can authenticate on block 8, 9, 10 with the key's from block 7
 
 The module is configured to authenticate only with Key A.
 
-### Card Register
+
 
 Physical memory content of the chip/card which was included on the RFID-RC522 Module
 

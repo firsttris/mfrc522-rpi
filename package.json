@@ -1,6 +1,6 @@
 {
   "name": "mfrc522-rpi",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "small JavaScript interface to control RFID reader MFRC522 with Raspberry-pi",
   "main": "index.js",
   "scripts": {
