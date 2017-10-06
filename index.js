@@ -4,21 +4,17 @@ const WiringPi = require("wiringpi-node");
 const NRSTPD = 25; /// GPIO 25
 const OK = true;
 const ERROR = false;
+WiringPi.wiringPiSPISetup(0, 1000000);
+WiringPi.setup("gpio");
+WiringPi.pinMode(NRSTPD, WiringPi.OUTPUT);
+WiringPi.digitalWrite(NRSTPD, WiringPi.HIGH);
 
 class MFRC522 {
-
-    static initSPIMode() {
-        WiringPi.wiringPiSPISetup(0, 1000000);
-        WiringPi.setup("gpio");
-        WiringPi.pinMode(NRSTPD, WiringPi.OUTPUT);
-        WiringPi.digitalWrite(NRSTPD, WiringPi.HIGH);
-    }
 
     /**
      * Initializes the MFRC522 chip.
      */
     static init() {
-        this.initSPIMode();
         this.reset();
         this.writeRegister(CMD.TModeReg, 0x8D); // TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
         this.writeRegister(CMD.TPrescalerReg, 0x3E); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
