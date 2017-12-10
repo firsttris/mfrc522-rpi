@@ -157,8 +157,8 @@ https://github.com/mxgxw/MFRC522-python
 
 Link to Amazon (Germany): [Link](https://www.amazon.de/dp/B00QFDRPZY/ref=cm_sw_r_tw_dp_x_.zoCybA5MAYZ0)
 
-## Donate
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=KEAR9ZC228YCL)
+## Code of Conduct
+See the [CODE](CODE_OF_CONDUCT.md) 
 
 ## License
 See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
