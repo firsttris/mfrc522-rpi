@@ -1,5 +1,7 @@
 "use strict";
 const mfrc522 = require("./../index");
+//# Init WiringPi with SPI Channel 0
+mfrc522.initWiringPi(0);
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
 console.log("scanning...");
@@ -9,7 +11,7 @@ console.log("Press Ctrl-C to stop.");
 setInterval(function(){
 
     //# reset card
-    mfrc522.init();        
+    mfrc522.reset();      
 
     //# Scan for cards
     let response = mfrc522.findCard();
