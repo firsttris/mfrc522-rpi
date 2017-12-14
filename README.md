@@ -13,6 +13,12 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 - Read uid & card memory
 - Write card memory & card key
 
+## Enable SPI
+
+The SPI master driver is disabled by default on Raspbian. To enable it, use raspi-config, or ensure the line dtparam=spi=on isn't commented out in  /boot/config.txt, and reboot. If the SPI driver was loaded, you should see the device /dev/spidev0.0
+
+[more info](https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md)
+
 ## Install
 Install the latest version via npm:
 
