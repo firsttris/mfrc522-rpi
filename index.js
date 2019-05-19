@@ -2,8 +2,11 @@
 const CMD = require("./commands");
 const WiringPi = require("wiringpi-node");
 const NRSTPD = 25; /// GPIO 25
+const BUZZER = 24; /// GPIO 24
 const OK = true;
 const ERROR = false;
+let BUZZERCount = 1;
+let isCycleEnded = true;
 
 class MFRC522 {
   /**
@@ -18,6 +21,9 @@ class MFRC522 {
     WiringPi.setup("gpio");
     WiringPi.pinMode(NRSTPD, WiringPi.OUTPUT);
     WiringPi.digitalWrite(NRSTPD, WiringPi.HIGH);
+    // Set Alert mode and initial value.
+    WiringPi.pinMode(BUZZER, WiringPi.OUTPUT);
+    WiringPi.digitalWrite(BUZZER, WiringPi.LOW);
   }
 
   /**
@@ -197,6 +203,26 @@ class MFRC522 {
   }
 
   /**
+   * Alert card holder that the card has been read.
+   */
+  static alert() {
+    setTimeout(() => {
+      WiringPi.digitalWrite(BUZZER, 1);
+      setTimeout(() => {
+        WiringPi.digitalWrite(BUZZER, 0);
+        BUZZERCount++;
+        if (BUZZERCount == 3) {
+          BUZZERCount = 1;
+          isCycleEnded = true;
+        } else {
+          isCycleEnded = false;
+          this.alert();
+        }
+      }, 80);
+    }, 180);
+  }
+
+  /**
    * Find card, read card type
    * TagType - Returns the card type
    * 0x4400 = Mifare_UltraLight
@@ -210,13 +236,16 @@ class MFRC522 {
    * @memberof MFRC522
    */
   static findCard() {
-    this.writeRegister(CMD.BitFramingReg, 0x07);
-    const tagType = [CMD.PICC_REQIDL];
-    let response = this.toCard(CMD.PCD_TRANSCEIVE, tagType);
-    if (response.bitSize != 0x10) {
-      response.status = ERROR;
+    if (isCycleEnded) {
+      this.writeRegister(CMD.BitFramingReg, 0x07);
+      const tagType = [CMD.PICC_REQIDL];
+      let response = this.toCard(CMD.PCD_TRANSCEIVE, tagType);
+      if (response.bitSize != 0x10) {
+        response.status = ERROR;
+      }
+      return { status: response.status, bitSize: response.bitSize };
     }
-    return { status: response.status, bitSize: response.bitSize };
+    return { status: null, bitSize: null };
   }
 
   /**
@@ -228,6 +257,7 @@ class MFRC522 {
    * @memberof MFRC522
    */
   static getUid() {
+    this.alert();
     this.writeRegister(CMD.BitFramingReg, 0x00);
     const uid = [CMD.PICC_ANTICOLL, 0x20];
     let response = this.toCard(CMD.PCD_TRANSCEIVE, uid);
@@ -307,10 +337,10 @@ class MFRC522 {
    */
   static authenticate(address, key, uid) {
     /* Password authentication mode (A or B)
-         * 0x60 = Verify the A key are the first 6 bit
-         * 0x61 = Verify the B key are the last 6 bit
-         * Second bit is the block address
-         */
+     * 0x60 = Verify the A key are the first 6 bit
+     * 0x61 = Verify the B key are the last 6 bit
+     * Second bit is the block address
+     */
     let buffer = [CMD.PICC_AUTHENT1A, address];
     // Key default 6 bit of 0xFF
     for (let i = 0; i < key.length; i++) {

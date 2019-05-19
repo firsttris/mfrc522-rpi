@@ -4,31 +4,33 @@
 
 MFRC522 is integrated in all types of <b>13.56MHz RFID</b> passive contactless communication methods and protocols.
 
-
 It uses the ISO14443 specification to communicate to MIFARE cards (also known as <b>NTAG, NFC</b>)
 [MIFARE wiki](https://en.wikipedia.org/wiki/MIFARE)
 [ISO14443 wiki](https://de.wikipedia.org/wiki/ISO/IEC_14443)
 
 ## Features
+
 - Read uid & card memory
 - Write card memory & card key
 
 ## Enable SPI
 
-The SPI master driver is disabled by default on Raspbian. To enable it, use raspi-config, or ensure the line dtparam=spi=on isn't commented out in  /boot/config.txt, and reboot. If the SPI driver was loaded, you should see the device /dev/spidev0.0
+The SPI master driver is disabled by default on Raspbian. To enable it, use raspi-config, or ensure the line dtparam=spi=on isn't commented out in /boot/config.txt, and reboot. If the SPI driver was loaded, you should see the device /dev/spidev0.0
 
 [more info](https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md)
 
 ## Install
-Install the latest version via npm:
 
-*Can only be installed on rpi, through dependency to wiring-pi*
+Install the node version 8 (Only) via npm. Since the latest version using different function parameter for compiling the module it will not run with the latest version. NVM is a nice recommendation for this issue:
+
+_Can only be installed on rpi, through dependency to wiring-pi_
 
 [![npm version](https://badge.fury.io/js/mfrc522-rpi.svg)](https://badge.fury.io/js/mfrc522-rpi)
 
 ```
 npm install mfrc522-rpi
 ```
+
 ## Usage
 
 ```
@@ -44,6 +46,7 @@ node /node_modules/mfrc522-rpi/test/dumpNTAG213.js
 # write card
 node /node_modules/mfrc522-rpi/test/write.js
 ```
+
 Find examples in "test" directory
 
 ### Card Register
@@ -51,15 +54,13 @@ Find examples in "test" directory
 On your NFC Chip are key and data register (see card register). Block 7 is a key register
 It contains the keys for data register 8, 9, 10. There are 2 keys located in block 7:
 
-- KEY B: first 6 bit of block 7 - in hex: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 
+- KEY B: first 6 bit of block 7 - in hex: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 - KEY A: last 6 bit of block 7 - in hex: 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 - Accessbits: 4 bits in the middle - in decemial: 255, 7, 128, 105
 
 You can authenticate on block 8, 9, 10 with the key's from block 7
 
 The module is configured to authenticate only with Key A.
-
-
 
 Physical memory content of the chip/card which was included on the RFID-RC522 Module
 
@@ -131,14 +132,15 @@ Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 ```
 
 ### Chang Auth Key
+
 (not tested)
 Authenticate on block 7 with key from block 7, write new key to block.
 
 ## Documentation
+
 Manufacturer documentation of MFRC522
 
 [MFRC522-Doc.pdf](https://www.nxp.com/documents/data_sheet/MFRC522.pdf)
-
 
 ### NTAG (NXP213)
 
@@ -155,6 +157,27 @@ https://github.com/miguelbalboa/rfid
 https://github.com/mxgxw/MFRC522-python
 
 ### Wiring
+
+## Hardware installation Installation
+
+Follow the map here to do the interface pins.
+
+| Name   | Pin # | Pin name           |
+| ------ | ----- | ------------------ |
+| SDA    | 24    | CE0                |
+| SCK    | 23    | SCLK1              |
+| MOSI   | 19    | MOSI1              |
+| MISO   | 21    | MOSO1              |
+| IRQ    | None  | None               |
+| GND    | Any   | Any Ground         |
+| RST    | 22    | GPIO5C3            |
+| 3.3V   | 1     | 3V3                |
+| Buzzer | 18    | GPIO5B3 (Optional) |
+
+Note that the pins number is different from the BCM number.
+
+![Screenshot](https://github.com/AhmedBHameed/mfrc522-rpi/blob/master/wiki/gpio-map.png)
+
 ![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/rpi-mfrc522-wiring2.PNG)
 
 ### Which hardware is used?
@@ -164,7 +187,9 @@ https://github.com/mxgxw/MFRC522-python
 Link to Amazon (Germany): [Link](https://www.amazon.de/dp/B00QFDRPZY/ref=cm_sw_r_tw_dp_x_.zoCybA5MAYZ0)
 
 ## Code of Conduct
-See the [CODE](CODE_OF_CONDUCT.md) 
+
+See the [CODE](CODE_OF_CONDUCT.md)
 
 ## License
+
 See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
