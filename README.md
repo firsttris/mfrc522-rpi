@@ -158,8 +158,6 @@ https://github.com/mxgxw/MFRC522-python
 
 ### Wiring
 
-## Hardware installation Installation
-
 Follow the map here to do the interface pins.
 
 | Name   | Pin # | Pin name           |
