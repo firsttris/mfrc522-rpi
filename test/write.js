@@ -1,72 +1,121 @@
 "use strict";
-const mfrc522 = require("./../index");
-//# Init WiringPi with SPI Channel 0
-mfrc522.initWiringPi(0);
+const Mfrc522 = require("./../index");
+const SoftSPI = require("rpi-softspi");
 
 //# This loop keeps checking for chips. If one is near it will get the UID and authenticate
 console.log("scanning...");
 console.log("Please put chip or keycard in the antenna inductive zone!");
 console.log("Press Ctrl-C to stop.");
 
-setInterval(function(){
+const softSPI = new SoftSPI({
+  clock: 23, // pin number of SCLK
+  mosi: 19, // pin number of MOSI
+  miso: 21, // pin number of MISO
+  client: 24 // pin number of CS
+});
 
-    //# reset card
-    mfrc522.reset();      
+// GPIO 24 can be used for buzzer bin (PIN 18), Reset pin is (PIN 22).
+// I believe that channing pattern is better for configuring pins which are optional methods to use.
+const mfrc522 = new Mfrc522(softSPI).setResetPin(22).setBuzzerPin(18);
 
-    //# Scan for cards
-    let response = mfrc522.findCard();
-    if (!response.status) {
-        console.log("No Card");
-        return;
-    }
-    console.log("Card detected, CardType: " + response.bitSize);
+setInterval(function() {
+  //# reset card
+  mfrc522.reset();
 
-    //# Get the UID of the card
-    response = mfrc522.getUid();
-    if (!response.status) {
-        console.log("UID Scan Error");
-        return;
-    }
-    //# If we have the UID, continue
-    const uid = response.data;
-    console.log("Card read UID: %s %s %s %s", uid[0].toString(16), uid[1].toString(16), uid[2].toString(16), uid[3].toString(16));
+  //# Scan for cards
+  let response = mfrc522.findCard();
+  if (!response.status) {
+    console.log("No Card");
+    return;
+  }
+  console.log("Card detected, CardType: " + response.bitSize);
 
-    //# Select the scanned card
-    const memoryCapacity = mfrc522.selectCard(uid);
-    console.log("Card Memory Capacity: " + memoryCapacity);
+  //# Get the UID of the card
+  response = mfrc522.getUid();
+  if (!response.status) {
+    console.log("UID Scan Error");
+    return;
+  }
+  //# If we have the UID, continue
+  const uid = response.data;
+  console.log(
+    "Card read UID: %s %s %s %s",
+    uid[0].toString(16),
+    uid[1].toString(16),
+    uid[2].toString(16),
+    uid[3].toString(16)
+  );
 
-    //# This is the default key for authentication
-    const key = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+  //# Select the scanned card
+  const memoryCapacity = mfrc522.selectCard(uid);
+  console.log("Card Memory Capacity: " + memoryCapacity);
 
-    //# Authenticate on Block 8 with key and uid
-    if (!mfrc522.authenticate(8, key, uid)) {
-        console.log("Authentication Error");
-        return;
-    }
+  //# This is the default key for authentication
+  const key = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
 
-    //# Variable for the data to write
-    let data = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+  //# Authenticate on Block 8 with key and uid
+  if (!mfrc522.authenticate(8, key, uid)) {
+    console.log("Authentication Error");
+    return;
+  }
 
-    console.log("Block 8 looked like this:");
-    console.log(mfrc522.getDataForBlock(8));
+  //# Variable for the data to write
+  let data = [
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff,
+    0xff
+  ];
 
-    console.log("Block 8 will be filled with 0xFF:");
-    mfrc522.writeDataToBlock(8, data);
+  console.log("Block 8 looked like this:");
+  console.log(mfrc522.getDataForBlock(8));
 
-    console.log("Now Block 8 looks like this:");
-    console.log(mfrc522.getDataForBlock(8));
+  console.log("Block 8 will be filled with 0xFF:");
+  mfrc522.writeDataToBlock(8, data);
 
-    data = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+  console.log("Now Block 8 looks like this:");
+  console.log(mfrc522.getDataForBlock(8));
 
-    console.log("Now we fill it with 16 x 0");
-    mfrc522.writeDataToBlock(8, data);
+  data = [
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00
+  ];
 
-    console.log("It is now empty:");
-    console.log(mfrc522.getDataForBlock(8));
+  console.log("Now we fill it with 16 x 0");
+  mfrc522.writeDataToBlock(8, data);
 
-    mfrc522.stopCrypto();
+  console.log("It is now empty:");
+  console.log(mfrc522.getDataForBlock(8));
 
-    console.log("finished successfully!");
+  mfrc522.stopCrypto();
 
-
+  console.log("finished successfully!");
 }, 500);

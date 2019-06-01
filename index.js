@@ -1,32 +1,58 @@
 "use strict";
 const CMD = require("./commands");
-const WiringPi = require("wiringpi-node");
-const NRSTPD = 25; /// GPIO 25
+const rpio = require("rpio");
 const OK = true;
 const ERROR = false;
+let BUZZERCount = 1;
+let isCycleEnded = true;
 
 class MFRC522 {
   /**
-   * Initialize WiringPi
+   * Initialize MFRC522
    *
-   * @static
-   * @param {any} channel
+   * @param {any} SoftSPI object
+   * @param {any} reset pin number
    * @memberof MFRC522
    */
-  static initWiringPi(channel) {
-    WiringPi.wiringPiSPISetup(channel || 0, 1000000);
-    WiringPi.setup("gpio");
-    WiringPi.pinMode(NRSTPD, WiringPi.OUTPUT);
-    WiringPi.digitalWrite(NRSTPD, WiringPi.HIGH);
+  constructor(spi) {
+    this.spi = spi;
+    this.spi.open();
+    return this;
+  }
+
+  setResetPin(pin = 22) {
+    if (!pin) {
+      throw new Error(
+        "Invalid parameter! reset pin parameter is invalid or not provided!"
+      );
+    }
+    this.reset_pin = pin;
+    // Hold RESET pin low for 50ms to hard reset the reader
+    rpio.open(this.reset_pin, rpio.OUTPUT, rpio.LOW);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+    rpio.write(this.reset_pin, rpio.HIGH);
+    return this;
+  }
+
+  setBuzzerPin(pin) {
+    // Set Alert mode and initial value.
+    if (!pin) {
+      throw new Error(
+        "Invalid parameter! buzzer pin parameter is invalid or not provided!"
+      );
+    }
+    this.buzzer_pin = pin;
+    rpio.open(this.buzzer_pin, rpio.OUTPUT);
+    rpio.write(this.buzzer_pin, rpio.LOW);
+    return this;
   }
 
   /**
    * Initializes the MFRC522 chip.
    *
-   * @static
    * @memberof MFRC522
    */
-  static reset() {
+  reset() {
     this.writeRegister(CMD.CommandReg, CMD.PCD_RESETPHASE); // reset chip
     this.writeRegister(CMD.TModeReg, 0x8d); // TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
     this.writeRegister(CMD.TPrescalerReg, 0x3e); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
@@ -41,42 +67,61 @@ class MFRC522 {
    * Writes a bit to the specified register in the MFRC522 chip.
    * The interface is described in the datasheet section 8.1.2.
    *
-   * @static
    * @param {any} addr
    * @param {any} val
    * @memberof MFRC522
    */
-  static writeRegister(addr, val) {
+  writeRegister(addr, val) {
     const data = [(addr << 1) & 0x7e, val];
     const uint8Data = Uint8Array.from(data);
-    WiringPi.wiringPiSPIDataRW(0, uint8Data);
+    this.spi.write(uint8Data);
+  }
+
+  /**
+   * Alert card holder that the card has been read.
+   */
+  alert() {
+    if (this.buzzer_pin) {
+      setTimeout(() => {
+        rpio.write(this.buzzer_pin, 1);
+        setTimeout(() => {
+          rpio.write(this.buzzer_pin, 0);
+          BUZZERCount++;
+          if (BUZZERCount == 3) {
+            BUZZERCount = 1;
+            isCycleEnded = true;
+          } else {
+            isCycleEnded = false;
+            this.alert();
+          }
+        }, 80);
+      }, 180);
+    }
   }
 
   /**
    * Reads a bit from the specified register in the MFRC522 chip.
    * The interface is described in the datasheet section 8.1.2.
    *
-   * @static
    * @param {any} addr
    * @returns
    * @memberof MFRC522
    */
-  static readRegister(addr) {
+  readRegister(addr) {
     const data = [((addr << 1) & 0x7e) | 0x80, 0];
     const uint8Data = Uint8Array.from(data);
-    WiringPi.wiringPiSPIDataRW(0, uint8Data);
-    return uint8Data[1];
+    const uint8DataResponse = this.spi.transfer(uint8Data);
+    return uint8DataResponse[1];
   }
 
   /**
    * Sets the bits given in mask in register reg.
    *
-   * @static
    * @param {any} reg
    * @param {any} mask
    * @memberof MFRC522
    */
-  static setRegisterBitMask(reg, mask) {
+  setRegisterBitMask(reg, mask) {
     let response = this.readRegister(reg);
     this.writeRegister(reg, response | mask);
   }
@@ -84,12 +129,11 @@ class MFRC522 {
   /**
    * Clears the bits given in mask from register reg.
    *
-   * @static
    * @param {any} reg
    * @param {any} mask
    * @memberof MFRC522
    */
-  static clearRegisterBitMask(reg, mask) {
+  clearRegisterBitMask(reg, mask) {
     let response = this.readRegister(reg);
     this.writeRegister(reg, response & ~mask);
   }
@@ -97,10 +141,9 @@ class MFRC522 {
   /**
    *
    *
-   * @static
    * @memberof MFRC522
    */
-  static antennaOn() {
+  antennaOn() {
     let response = this.readRegister(CMD.TxControlReg);
     if (~(response & 0x03) != 0) {
       this.setRegisterBitMask(CMD.TxControlReg, 0x03);
@@ -110,23 +153,21 @@ class MFRC522 {
   /**
    *
    *
-   * @static
    * @memberof MFRC522
    */
-  static antennaOff() {
+  antennaOff() {
     this.clearRegisterBitMask(CMD.TxControlReg, 0x03);
   }
 
   /**
    *
    * RC522 and ISO14443 card communication
-   * @static
    * @param {any} command - command - MF522 command word
    * @param {any} bitsToSend - sent to the card through the RC522 data
    * @returns {{status: boolean, data: Array, bitSize: number}}
    * @memberof MFRC522
    */
-  static toCard(command, bitsToSend) {
+  toCard(command, bitsToSend) {
     let data = [];
     let bitSize = 0;
     let status = ERROR;
@@ -155,9 +196,10 @@ class MFRC522 {
       this.setRegisterBitMask(CMD.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
     }
     //Wait for the received data to complete
-    let i = 2000; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
+    let i = 250; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
     let n = 0;
     do {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250 - i);
       n = this.readRegister(CMD.CommIrqReg);
       i--;
     } while (i != 0 && !(n & 0x01) && !(n & waitIRq));
@@ -205,29 +247,31 @@ class MFRC522 {
    * 0x0800 = Mifare_Pro (X)
    * 0x4403 = Mifare_DESFire
    *
-   * @static
    * @returns {{status: *, bitSize: *}}
    * @memberof MFRC522
    */
-  static findCard() {
-    this.writeRegister(CMD.BitFramingReg, 0x07);
-    const tagType = [CMD.PICC_REQIDL];
-    let response = this.toCard(CMD.PCD_TRANSCEIVE, tagType);
-    if (response.bitSize != 0x10) {
-      response.status = ERROR;
+  findCard() {
+    if (isCycleEnded) {
+      this.writeRegister(CMD.BitFramingReg, 0x07);
+      const tagType = [CMD.PICC_REQIDL];
+      let response = this.toCard(CMD.PCD_TRANSCEIVE, tagType);
+      if (response.bitSize != 0x10) {
+        response.status = ERROR;
+      }
+      return { status: response.status, bitSize: response.bitSize };
     }
-    return { status: response.status, bitSize: response.bitSize };
+    return { status: null, bitSize: null };
   }
 
   /**
    * Anti-collision detection, get uid (serial number) of found card
    * 4-bit card to return the serial number, the first five bit for the check bit
    *
-   * @static
    * @returns {{status: *, data: Array, bitSize: *}}
    * @memberof MFRC522
    */
-  static getUid() {
+  getUid() {
+    this.alert();
     this.writeRegister(CMD.BitFramingReg, 0x00);
     const uid = [CMD.PICC_ANTICOLL, 0x20];
     let response = this.toCard(CMD.PCD_TRANSCEIVE, uid);
@@ -246,12 +290,11 @@ class MFRC522 {
   /**
    * Use the CRC coprocessor in the MFRC522 to calculate a CRC
    *
-   * @static
    * @param {any} data
    * @returns {array}
    * @memberof MFRC522
    */
-  static calculateCRC(data) {
+  calculateCRC(data) {
     this.clearRegisterBitMask(CMD.DivIrqReg, 0x04); // Clear the CRCIRq interrupt request bit
     this.setRegisterBitMask(CMD.FIFOLevelReg, 0x80); // FlushBuffer = 1, FIFO initialization
     //Write data to the FIFO
@@ -276,12 +319,11 @@ class MFRC522 {
   /**
    * Select card by, returns card memory capacity
    *
-   * @static
    * @param {any} uid
    * @returns
    * @memberof MFRC522
    */
-  static selectCard(uid) {
+  selectCard(uid) {
     let buffer = [CMD.PICC_SELECTTAG, 0x70];
     for (let i = 0; i < 5; i++) {
       buffer.push(uid[i]);
@@ -305,12 +347,12 @@ class MFRC522 {
    * @returns {*}
    * @memberof MFRC522
    */
-  static authenticate(address, key, uid) {
+  authenticate(address, key, uid) {
     /* Password authentication mode (A or B)
-         * 0x60 = Verify the A key are the first 6 bit
-         * 0x61 = Verify the B key are the last 6 bit
-         * Second bit is the block address
-         */
+     * 0x60 = Verify the A key are the first 6 bit
+     * 0x61 = Verify the B key are the last 6 bit
+     * Second bit is the block address
+     */
     let buffer = [CMD.PICC_AUTHENT1A, address];
     // Key default 6 bit of 0xFF
     for (let i = 0; i < key.length; i++) {
@@ -331,22 +373,20 @@ class MFRC522 {
   /**
    *
    *
-   * @static
    * @memberof MFRC522
    */
-  static stopCrypto() {
+  stopCrypto() {
     this.clearRegisterBitMask(CMD.Status2Reg, 0x08);
   }
 
   /**
    * Get Data for Block
    *
-   * @static
    * @param {any} address
    * @returns
    * @memberof MFRC522
    */
-  static getDataForBlock(address) {
+  getDataForBlock(address) {
     let request = [CMD.PICC_READ, address];
     request = request.concat(this.calculateCRC(request));
     let response = this.toCard(CMD.PCD_TRANSCEIVE, request);
@@ -366,12 +406,11 @@ class MFRC522 {
   /**
    *
    *
-   * @static
    * @param {any} buffer
    * @returns
    * @memberof MFRC522
    */
-  static appendCRCtoBufferAndSendToCard(buffer) {
+  appendCRCtoBufferAndSendToCard(buffer) {
     buffer = buffer.concat(this.calculateCRC(buffer));
     let response = this.toCard(CMD.PCD_TRANSCEIVE, buffer);
     if (
@@ -395,12 +434,11 @@ class MFRC522 {
   /**
    * Write Data To Block
    *
-   * @static
    * @param {any} address
    * @param {any} sixteenBits
    * @memberof MFRC522
    */
-  static writeDataToBlock(address, sixteenBits) {
+  writeDataToBlock(address, sixteenBits) {
     let buffer = [];
     buffer.push(CMD.PICC_WRITE);
     buffer.push(address);

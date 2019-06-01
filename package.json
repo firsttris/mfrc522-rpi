@@ -25,6 +25,7 @@
     "url": "https://github.com/firsttris/mfrc522-rpi.git"
   },
   "dependencies": {
-    "wiringpi-node": "^2.4.4"
+    "rpi-softspi": "^1.0.5",
+    "rpio": "^1.0.13"
   }
 }
