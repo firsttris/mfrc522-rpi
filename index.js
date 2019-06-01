@@ -239,6 +239,26 @@ class MFRC522 {
   }
 
   /**
+   * Alert card holder that the card has been read.
+   */
+  static alert() {
+    setTimeout(() => {
+      WiringPi.digitalWrite(BUZZER, 1);
+      setTimeout(() => {
+        WiringPi.digitalWrite(BUZZER, 0);
+        BUZZERCount++;
+        if (BUZZERCount == 3) {
+          BUZZERCount = 1;
+          isCycleEnded = true;
+        } else {
+          isCycleEnded = false;
+          this.alert();
+        }
+      }, 80);
+    }, 180);
+  }
+
+  /**
    * Find card, read card type
    * TagType - Returns the card type
    * 0x4400 = Mifare_UltraLight
