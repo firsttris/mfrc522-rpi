@@ -48,6 +48,8 @@ node /node_modules/mfrc522-rpi/test/write.js
 
 Find examples in "test" directory
 
+Example for NTAG213 https://github.com/firsttris/mfrc522-rpi/issues/5
+
 ### Card Register
 
 On your NFC Chip are key and data register (see card register). Block 7 is a key register
