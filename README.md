@@ -12,6 +12,7 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 
 - Read uid & card memory
 - Write card memory & card key
+- Buzzer Notificiations
 
 ## Enable SPI
 
@@ -21,9 +22,7 @@ The SPI master driver is disabled by default on Raspbian. To enable it, use rasp
 
 ## Install
 
-Installation tested with node (8,10,11) versions. Since the latest version (12) at time using different function parameter for compiling the module it will not run with the latest version according to [node-rpio](https://github.com/jperkin/node-rpio#compatibility). NVM is a nice recommendation for this issue if multi-version needed:
-
-_Can only be installed on rpi, through dependency to wiring-pi_
+Installation tested with node (8,10,11) versions. Currently (Mai 2019) [node-rpio](https://github.com/jperkin/node-rpio#compatibility) is not compatible with node 12. You could use NVM (Node Version Mananager) to downgrade your node installation to a lower version (e.g. 11):
 
 [![npm version](https://badge.fury.io/js/mfrc522-rpi.svg)](https://badge.fury.io/js/mfrc522-rpi)
 
@@ -136,6 +135,12 @@ Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 (not tested)
 Authenticate on block 7 with key from block 7, write new key to block.
 
+## Buzzer (piezo speaker)
+
+![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/buzzer.jpg)
+
+Its possible to get Buzzer notifications when the RFID Module Reads your chip, simply connect a Buzzer with the RED cable to PIN 18 and the black to any ground on the GPIO's (see wiring & hardware installation)
+
 ## Documentation
 
 Manufacturer documentation of MFRC522
@@ -157,8 +162,6 @@ https://github.com/miguelbalboa/rfid
 https://github.com/mxgxw/MFRC522-python
 
 ### Wiring
-
-## Hardware installation Installation
 
 Follow the map here to do the interface pins.
 
