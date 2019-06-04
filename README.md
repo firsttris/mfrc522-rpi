@@ -12,7 +12,7 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 
 - Read uid & card memory
 - Write card memory & card key
-- Buzzer Notificiations
+- Buzzer notificiations
 
 ## Enable SPI
 
@@ -135,11 +135,11 @@ Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 (not tested)
 Authenticate on block 7 with key from block 7, write new key to block.
 
-## Buzzer (piezo speaker)
+## Buzzer
 
 ![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/buzzer.jpg)
 
-Its possible to get Buzzer notifications when the RFID Module Reads your chip, simply connect a Buzzer with the RED cable to PIN 18 and the black to any ground on the GPIO's (see wiring & hardware installation)
+Its possible to get buzzer notifications when the module reads a chip, simply connect a piezo speaker with the RED cable to PIN 18 and the black to any ground on the GPIO's (see wiring)
 
 ## Documentation
 
