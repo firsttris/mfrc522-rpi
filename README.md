@@ -12,7 +12,7 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 
 - Read uid & card memory
 - Write card memory & card key
-- Buzzer notificiations
+- Buzzer notification (Optional)
 
 ## Enable SPI
 
@@ -32,21 +32,95 @@ npm install mfrc522-rpi
 
 ## Usage
 
+By reading examples in `test` folder, you can interface your raspberry pi accordingly.
+
+#### read uid
+
+`node /node_modules/mfrc522-rpi/test/read.js`
+
+#### dump card
+
+`node /node_modules/mfrc522-rpi/test/dumpCard.js`
+
+#### dump NTAG213 (sticker)
+
+`node /node_modules/mfrc522-rpi/test/dumpNTAG213.js`
+
+#### write card
+
+`node /node_modules/mfrc522-rpi/test/write.js`
+
+For instance, those code can be used to read from your NFC card and log some information on the screen
+
+```js
+"use strict";
+const Mfrc522 = require("./../index");
+const SoftSPI = require("rpi-softspi");
+
+//# This loop keeps checking for chips. If one is near it will get the UID and authenticate
+console.log("scanning...");
+console.log("Please put chip or keycard in the antenna inductive zone!");
+console.log("Press Ctrl-C to stop.");
+
+const softSPI = new SoftSPI({
+  clock: 23, // pin number of SCLK
+  mosi: 19, // pin number of MOSI
+  miso: 21, // pin number of MISO
+  client: 24 // pin number of CS
+});
+
+// GPIO 24 can be used for buzzer bin (PIN 18), Reset pin is (PIN 22).
+// I believe that channing pattern is better for configuring pins which are optional methods to use.
+const mfrc522 = new Mfrc522(softSPI).setResetPin(22).setBuzzerPin(18);
+
+setInterval(function() {
+  //# reset card
+  mfrc522.reset();
+
+  //# Scan for cards
+  let response = mfrc522.findCard();
+  if (!response.status) {
+    console.log("No Card");
+    return;
+  }
+  console.log("Card detected, CardType: " + response.bitSize);
+
+  //# Get the UID of the card
+  response = mfrc522.getUid();
+  if (!response.status) {
+    console.log("UID Scan Error");
+    return;
+  }
+  //# If we have the UID, continue
+  const uid = response.data;
+  console.log(
+    "Card read UID: %s %s %s %s",
+    uid[0].toString(16),
+    uid[1].toString(16),
+    uid[2].toString(16),
+    uid[3].toString(16)
+  );
+
+  //# Select the scanned card
+  const memoryCapacity = mfrc522.selectCard(uid);
+  console.log("Card Memory Capacity: " + memoryCapacity);
+
+  //# This is the default key for authentication
+  const key = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+
+  //# Authenticate on Block 8 with key and uid
+  if (!mfrc522.authenticate(8, key, uid)) {
+    console.log("Authentication Error");
+    return;
+  }
+
+  //# Dump Block 8
+  console.log("Block: 8 Data: " + mfrc522.getDataForBlock(8));
+
+  //# Stop
+  mfrc522.stopCrypto();
+}, 500);
 ```
-# read uid
-node /node_modules/mfrc522-rpi/test/read.js
-
-# dump card
-node /node_modules/mfrc522-rpi/test/dumpCard.js
-
-# dump NTAG213 (sticker)
-node /node_modules/mfrc522-rpi/test/dumpNTAG213.js
-
-# write card
-node /node_modules/mfrc522-rpi/test/write.js
-```
-
-Find examples in "test" directory
 
 Example for NTAG213 https://github.com/firsttris/mfrc522-rpi/issues/5
 
@@ -139,9 +213,7 @@ Authenticate on block 7 with key from block 7, write new key to block.
 
 ## Buzzer
 
-![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/buzzer.jpg)
-
-Its possible to get buzzer notifications when the module reads a chip, simply connect a piezo speaker with the RED cable to PIN 18 and the black to any ground on the GPIO's (see wiring)
+It's possible to get buzzer notifications (Optional feature) when the module reads a chip, simply connect a piezo speaker (active one) with the BROWN cable to PIN 18 and the black to any ground on the GPIO's (see wiring)
 
 ## Documentation
 
@@ -181,15 +253,41 @@ Follow the map here to do the interface pins.
 
 Note that the pins number is different from the BCM number.
 
-![Screenshot](https://github.com/AhmedBHameed/mfrc522-rpi/blob/master/wiki/gpio-map.png)
+![Screenshot](wiki/mfrc522-node.png)
 
-![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/rpi-mfrc522-wiring2.PNG)
+![Screenshot](wiki/gpio-map.png)
 
 ### Which hardware is used?
 
-![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/RC522.jpg)
+List of hardware which are used with links to `amazon.de`:
 
-Link to Amazon (Germany): [Link](https://www.amazon.de/dp/B00QFDRPZY/ref=cm_sw_r_tw_dp_x_.zoCybA5MAYZ0)
+- [Raspberry Pi 3 B+](https://www.amazon.de/Raspberry-1373331-Pi-Modell-Mainboard/dp/B07BDR5PDW/ref=sr_1_3?crid=78XCCBIEFSD9&keywords=raspberry+pi+3+b%2B&qid=1565892766&s=gateway&sprefix=raspberry%2Caps%2C173&sr=8-3)
+- [RFID kit RC522](https://www.amazon.de/AZDelivery-Reader-Arduino-Raspberry-gratis/dp/B01M28JAAZ/ref=sr_1_1?keywords=MFRC522&qid=1565892804&s=gateway&sr=8-1)
+- [DC to DC regulator (5V to 3.3V)](https://www.amazon.de/PEMENOL-AMS1117-Stromversorgungsmodul-Raspberry-Mikrocontroller/dp/B07FSLGPR8/ref=sr_1_1?keywords=AMS1117&qid=1565868927&s=ce-de&sr=1-1) (optional) used only if you want to interface buzzer with the system.
+  ![ams1117](wiki/ams1117.png)
+- [Active buzzer (NOT passive)](https://www.amazon.de/BETAFPV-Terminals-Electronic-Continuous-12X9-5mm/dp/B073RH8TQK/ref=sr_1_2?keywords=Active+buzzer&qid=1565892971&s=ce-de&sr=1-2) (optional)
+  ![ams1117](wiki/diff-passive-active-buzzer.jpg)
+- [NPN transistor](https://www.amazon.de/100pcs-S8050-S8050D-Transistor-40Volts/dp/B00CZ6K2SM/ref=sr_1_1?keywords=s8050&qid=1565894051&s=computers&sr=1-1) (Optional)
+
+Those three optional component are required to run the buzzer with 5V. The RC522 is running at 3.3V so we need to step down the voltage a bit.
+
+## Demonstration
+
+![pic_1](wiki/demonstration/1.jpg)
+![pic_2](wiki/demonstration/2.jpg)
+![pic_3](wiki/demonstration/3.jpg)
+![pic_4](wiki/demonstration/4.jpg)
+![pic_5](wiki/demonstration/5.jpg)
+![pic_6](wiki/demonstration/6.jpg)
+![pic_7](wiki/demonstration/7.jpg)
+![pic_9](wiki/demonstration/9.jpg)
+
+**Video demo**
+<a href="wiki/demonstration/demo.mp4" target="_blank"><img src="wiki/demonstration/1.jpg" alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
+
+## Circuit Diagram:
+
+Inside `project-diagram` folder there is a diagram for the system. You can run it with `Fritzing` application and make a printable PCB after aligning components on your wish.
 
 ## Code of Conduct
 
