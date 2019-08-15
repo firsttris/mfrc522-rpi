@@ -283,6 +283,7 @@ Those three optional component are required to run the buzzer with 5V. The RC522
 ![pic_9](wiki/demonstration/9.jpg)
 
 **Video demo**
+
 <a href="wiki/demonstration/demo.mp4" target="_blank"><img src="wiki/demonstration/1.jpg" alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
 
 ## Circuit Diagram:
