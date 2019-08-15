@@ -14,6 +14,12 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 - Write card memory & card key
 - Buzzer notification (Optional)
 
+## Demo
+
+<figure class="video_container">
+  <iframe src="https://youtu.be/e5D_fy8IIjY" frameborder="0" allowfullscreen="true"> </iframe>
+</figure>
+
 ## Enable SPI
 
 The SPI master driver is disabled by default on Raspbian. To enable it, use raspi-config, or ensure the line dtparam=spi=on isn't commented out in /boot/config.txt. When it is enabled then reboot your pi. If the SPI driver was loaded, you should see the device /dev/spidev0.0
@@ -22,7 +28,7 @@ The SPI master driver is disabled by default on Raspbian. To enable it, use rasp
 
 ## Install
 
-Installation tested with node (8,10,11) versions. Currently (Mai 2019) [node-rpio](https://github.com/jperkin/node-rpio#compatibility) is not compatible with node 12. You could use NVM (Node Version Mananager) to downgrade your node installation to a lower version (e.g. 11):
+Installation tested with node (8,10,11) versions. Currently (Mai 2019) [node-rpio](https://github.com/jperkin/node-rpio#compatibility) is not compatible with node 12. You could use NVM (Node Version Manager) to downgrade your node installation to a lower version (e.g. 11):
 
 [![npm version](https://badge.fury.io/js/mfrc522-rpi.svg)](https://badge.fury.io/js/mfrc522-rpi)
 
@@ -50,79 +56,7 @@ By reading examples in `test` folder, you can interface your raspberry pi accord
 
 `node /node_modules/mfrc522-rpi/test/write.js`
 
-For instance, those code can be used to read from your NFC card and log some information on the screen
-
-```js
-"use strict";
-const Mfrc522 = require("./../index");
-const SoftSPI = require("rpi-softspi");
-
-//# This loop keeps checking for chips. If one is near it will get the UID and authenticate
-console.log("scanning...");
-console.log("Please put chip or keycard in the antenna inductive zone!");
-console.log("Press Ctrl-C to stop.");
-
-const softSPI = new SoftSPI({
-  clock: 23, // pin number of SCLK
-  mosi: 19, // pin number of MOSI
-  miso: 21, // pin number of MISO
-  client: 24 // pin number of CS
-});
-
-// GPIO 24 can be used for buzzer bin (PIN 18), Reset pin is (PIN 22).
-// I believe that channing pattern is better for configuring pins which are optional methods to use.
-const mfrc522 = new Mfrc522(softSPI).setResetPin(22).setBuzzerPin(18);
-
-setInterval(function() {
-  //# reset card
-  mfrc522.reset();
-
-  //# Scan for cards
-  let response = mfrc522.findCard();
-  if (!response.status) {
-    console.log("No Card");
-    return;
-  }
-  console.log("Card detected, CardType: " + response.bitSize);
-
-  //# Get the UID of the card
-  response = mfrc522.getUid();
-  if (!response.status) {
-    console.log("UID Scan Error");
-    return;
-  }
-  //# If we have the UID, continue
-  const uid = response.data;
-  console.log(
-    "Card read UID: %s %s %s %s",
-    uid[0].toString(16),
-    uid[1].toString(16),
-    uid[2].toString(16),
-    uid[3].toString(16)
-  );
-
-  //# Select the scanned card
-  const memoryCapacity = mfrc522.selectCard(uid);
-  console.log("Card Memory Capacity: " + memoryCapacity);
-
-  //# This is the default key for authentication
-  const key = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
-
-  //# Authenticate on Block 8 with key and uid
-  if (!mfrc522.authenticate(8, key, uid)) {
-    console.log("Authentication Error");
-    return;
-  }
-
-  //# Dump Block 8
-  console.log("Block: 8 Data: " + mfrc522.getDataForBlock(8));
-
-  //# Stop
-  mfrc522.stopCrypto();
-}, 500);
-```
-
-Example for NTAG213 https://github.com/firsttris/mfrc522-rpi/issues/5
+Thank you to [musdom](https://github.com/musdom) for providing code example for NTAG213 https://github.com/firsttris/mfrc522-rpi/issues/5
 
 ### Card Register
 
@@ -273,18 +207,7 @@ Those three optional component are required to run the buzzer with 5V. The RC522
 
 ## Demonstration
 
-![pic_1](wiki/demonstration/1.jpg)
-![pic_2](wiki/demonstration/2.jpg)
-![pic_3](wiki/demonstration/3.jpg)
-![pic_4](wiki/demonstration/4.jpg)
-![pic_5](wiki/demonstration/5.jpg)
-![pic_6](wiki/demonstration/6.jpg)
-![pic_7](wiki/demonstration/7.jpg)
-![pic_9](wiki/demonstration/9.jpg)
-
-**Video demo**
-
-<a href="wiki/demonstration/demo.mp4" target="_blank"><img src="wiki/demonstration/1.jpg" alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
+- Some images and video demonstration can be found [here](docs/demo.md)
 
 ## Circuit Diagram:
 
