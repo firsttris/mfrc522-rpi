@@ -145,10 +145,6 @@ Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 (not tested)
 Authenticate on block 7 with key from block 7, write new key to block.
 
-## Buzzer
-
-It's possible to get buzzer notifications (Optional feature) when the module reads a chip, simply connect a piezo speaker (active one) with the BROWN cable to PIN 18 and the black to any ground on the GPIO's (see wiring)
-
 ## Documentation
 
 Manufacturer documentation of MFRC522
@@ -188,9 +184,11 @@ List of hardware which are used with links to `amazon.de`:
 - [Raspberry Pi 3 B+](https://www.amazon.de/Raspberry-1373331-Pi-Modell-Mainboard/dp/B07BDR5PDW/ref=sr_1_3?crid=78XCCBIEFSD9&keywords=raspberry+pi+3+b%2B&qid=1565892766&s=gateway&sprefix=raspberry%2Caps%2C173&sr=8-3)
 - [RFID kit RC522](https://www.amazon.de/AZDelivery-Reader-Arduino-Raspberry-gratis/dp/B01M28JAAZ/ref=sr_1_1?keywords=MFRC522&qid=1565892804&s=gateway&sr=8-1)
 
----
+## Buzzer Notifications (optional)
 
-To attach buzzer to the module then you need
+It's possible to get buzzer notifications when the module reads a chip, simply connect a piezo speaker to your PI.
+
+### Components for Buzzer
 
 - [DC to DC regulator (5V to 3.3V)](https://www.amazon.de/PEMENOL-AMS1117-Stromversorgungsmodul-Raspberry-Mikrocontroller/dp/B07FSLGPR8/ref=sr_1_1?keywords=AMS1117&qid=1565868927&s=ce-de&sr=1-1) (optional) used only if you want to interface buzzer with the system.
   ![ams1117](wiki/ams1117.png)
@@ -200,7 +198,7 @@ To attach buzzer to the module then you need
 
 Those three optional component are required to run the buzzer with 5V. The RC522 is running at 3.3V so we need to step down the voltage a bit.
 
-> The schema with buzzer would be like this **_checkout this `schema`_**
+### Wiring with Buzzer
 
 ![Screenshot](wiki/mfrc522-node.png)
 
