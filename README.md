@@ -16,7 +16,7 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 
 ## Demo
 
-[![Watch the video](https://i9.ytimg.com/vi/e5D_fy8IIjY/mq1.jpg?sqp=CLjl1uoF&rs=AOn4CLDXxp1OsdHsJlcXN-mVi6xaFhbEYA)](https://youtu.be/e5D_fy8IIjY)
+[![Watch the video](https://github.com/firsttris/mfrc522-rpi/raw/docs/wiki/youtube.png)](https://youtu.be/e5D_fy8IIjY)
 
 ## Enable SPI
 
