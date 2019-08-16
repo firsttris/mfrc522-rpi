@@ -185,7 +185,7 @@ Follow the map here to do the interface pins.
 
 Note that the pins number is different from the BCM number.
 
-![Screenshot](wiki/mfrc522-node.png)
+![Screenshot](wiki/rpi-mfrc522-wiring2.PNG)
 
 ![Screenshot](wiki/gpio-map.png)
 
@@ -195,6 +195,11 @@ List of hardware which are used with links to `amazon.de`:
 
 - [Raspberry Pi 3 B+](https://www.amazon.de/Raspberry-1373331-Pi-Modell-Mainboard/dp/B07BDR5PDW/ref=sr_1_3?crid=78XCCBIEFSD9&keywords=raspberry+pi+3+b%2B&qid=1565892766&s=gateway&sprefix=raspberry%2Caps%2C173&sr=8-3)
 - [RFID kit RC522](https://www.amazon.de/AZDelivery-Reader-Arduino-Raspberry-gratis/dp/B01M28JAAZ/ref=sr_1_1?keywords=MFRC522&qid=1565892804&s=gateway&sr=8-1)
+
+---
+
+To attach buzzer to the module then you need
+
 - [DC to DC regulator (5V to 3.3V)](https://www.amazon.de/PEMENOL-AMS1117-Stromversorgungsmodul-Raspberry-Mikrocontroller/dp/B07FSLGPR8/ref=sr_1_1?keywords=AMS1117&qid=1565868927&s=ce-de&sr=1-1) (optional) used only if you want to interface buzzer with the system.
   ![ams1117](wiki/ams1117.png)
 - [Active buzzer (NOT passive)](https://www.amazon.de/BETAFPV-Terminals-Electronic-Continuous-12X9-5mm/dp/B073RH8TQK/ref=sr_1_2?keywords=Active+buzzer&qid=1565892971&s=ce-de&sr=1-2) (optional)
@@ -202,6 +207,10 @@ List of hardware which are used with links to `amazon.de`:
 - [NPN transistor](https://www.amazon.de/100pcs-S8050-S8050D-Transistor-40Volts/dp/B00CZ6K2SM/ref=sr_1_1?keywords=s8050&qid=1565894051&s=computers&sr=1-1) (Optional)
 
 Those three optional component are required to run the buzzer with 5V. The RC522 is running at 3.3V so we need to step down the voltage a bit.
+
+> The schema with buzzer would be like this **_checkout this `schema`_**
+
+![Screenshot](wiki/mfrc522-node.png)
 
 ## Demonstration
 
