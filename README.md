@@ -12,7 +12,11 @@ It uses the ISO14443 specification to communicate to MIFARE cards (also known as
 
 - Read uid & card memory
 - Write card memory & card key
-- Buzzer notificiations
+- Buzzer notification (Optional)
+
+## Demo
+
+[![Watch the video](https://github.com/firsttris/mfrc522-rpi/raw/docs/wiki/youtube.png)](https://youtu.be/e5D_fy8IIjY)
 
 ## Enable SPI
 
@@ -22,7 +26,7 @@ The SPI master driver is disabled by default on Raspbian. To enable it, use rasp
 
 ## Install
 
-Installation tested with node (8,10,11) versions. Currently (Mai 2019) [node-rpio](https://github.com/jperkin/node-rpio#compatibility) is not compatible with node 12. You could use NVM (Node Version Mananager) to downgrade your node installation to a lower version (e.g. 11):
+Installation tested with node (8,10,11) versions. Currently (Mai 2019) [node-rpio](https://github.com/jperkin/node-rpio#compatibility) is not compatible with node 12. You could use NVM (Node Version Manager) to downgrade your node installation to a lower version (e.g. 11):
 
 [![npm version](https://badge.fury.io/js/mfrc522-rpi.svg)](https://badge.fury.io/js/mfrc522-rpi)
 
@@ -32,23 +36,27 @@ npm install mfrc522-rpi
 
 ## Usage
 
-```
-# read uid
-node /node_modules/mfrc522-rpi/test/read.js
+The examples in the `test` folder will help you get things started
 
-# dump card
-node /node_modules/mfrc522-rpi/test/dumpCard.js
+#### read uid
 
-# dump NTAG213 (sticker)
-node /node_modules/mfrc522-rpi/test/dumpNTAG213.js
+`node /node_modules/mfrc522-rpi/test/read.js`
 
-# write card
-node /node_modules/mfrc522-rpi/test/write.js
-```
+#### dump card
 
-Find examples in "test" directory
+`node /node_modules/mfrc522-rpi/test/dumpCard.js`
 
-Example for NTAG213 https://github.com/firsttris/mfrc522-rpi/issues/5
+#### dump NTAG213 (sticker)
+
+`node /node_modules/mfrc522-rpi/test/dumpNTAG213.js`
+
+#### write NTAG213
+
+https://github.com/firsttris/mfrc522-rpi/issues/5 Thanks to [musdom](https://github.com/musdom)
+
+#### write card
+
+`node /node_modules/mfrc522-rpi/test/write.js`
 
 ### Card Register
 
@@ -137,31 +145,15 @@ Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 (not tested)
 Authenticate on block 7 with key from block 7, write new key to block.
 
-## Buzzer
-
-![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/buzzer.jpg)
-
-Its possible to get buzzer notifications when the module reads a chip, simply connect a piezo speaker with the RED cable to PIN 18 and the black to any ground on the GPIO's (see wiring)
-
 ## Documentation
 
 Manufacturer documentation of MFRC522
 
 [MFRC522-Doc.pdf](https://www.nxp.com/documents/data_sheet/MFRC522.pdf)
 
-### NTAG (NXP213)
-
-[about NFC-TAG types](http://www.nfc-tag-shop.de/info/ueber-nfc-tags/nfc-tag-typen.html)
-
-[ebay link](http://www.ebay.de/itm/121594983773?_trksid=p2060353.m2749.l2649)
+[NFC-TAG Types](http://www.nfc-tag-shop.de/info/ueber-nfc-tags/nfc-tag-typen.html)
 
 [NTAG213_215_216.pdf](https://www.nxp.com/documents/data_sheet/NTAG213_215_216.pdf)
-
-### Sources
-
-https://github.com/miguelbalboa/rfid
-
-https://github.com/mxgxw/MFRC522-python
 
 ### Wiring
 
@@ -181,15 +173,48 @@ Follow the map here to do the interface pins.
 
 Note that the pins number is different from the BCM number.
 
-![Screenshot](https://github.com/AhmedBHameed/mfrc522-rpi/blob/master/wiki/gpio-map.png)
+![Screenshot](wiki/rpi-mfrc522-wiring2.PNG)
 
-![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/rpi-mfrc522-wiring2.PNG)
+![Screenshot](wiki/gpio-map.png)
 
 ### Which hardware is used?
 
-![Screenshot](https://github.com/firsttris/mfrc522-rpi/blob/master/wiki/RC522.jpg)
+List of hardware which are used with links to `amazon.de`:
 
-Link to Amazon (Germany): [Link](https://www.amazon.de/dp/B00QFDRPZY/ref=cm_sw_r_tw_dp_x_.zoCybA5MAYZ0)
+- [Raspberry Pi 3 B+](https://www.amazon.de/Raspberry-1373331-Pi-Modell-Mainboard/dp/B07BDR5PDW/ref=sr_1_3?crid=78XCCBIEFSD9&keywords=raspberry+pi+3+b%2B&qid=1565892766&s=gateway&sprefix=raspberry%2Caps%2C173&sr=8-3)
+- [RFID kit RC522](https://www.amazon.de/AZDelivery-Reader-Arduino-Raspberry-gratis/dp/B01M28JAAZ/ref=sr_1_1?keywords=MFRC522&qid=1565892804&s=gateway&sr=8-1)
+
+## Buzzer Notifications (optional)
+
+It's possible to get buzzer notifications when the module reads a chip, simply connect a piezo speaker to your PI.
+
+### Components for Buzzer
+
+- [DC to DC regulator (5V to 3.3V)](https://www.amazon.de/PEMENOL-AMS1117-Stromversorgungsmodul-Raspberry-Mikrocontroller/dp/B07FSLGPR8/ref=sr_1_1?keywords=AMS1117&qid=1565868927&s=ce-de&sr=1-1) (optional) used only if you want to interface buzzer with the system.
+  ![ams1117](wiki/ams1117.png)
+- [Active buzzer (NOT passive)](https://www.amazon.de/BETAFPV-Terminals-Electronic-Continuous-12X9-5mm/dp/B073RH8TQK/ref=sr_1_2?keywords=Active+buzzer&qid=1565892971&s=ce-de&sr=1-2) (optional)
+  ![ams1117](wiki/diff-passive-active-buzzer.jpg)
+- [NPN transistor](https://www.amazon.de/100pcs-S8050-S8050D-Transistor-40Volts/dp/B00CZ6K2SM/ref=sr_1_1?keywords=s8050&qid=1565894051&s=computers&sr=1-1) (Optional)
+
+Those three optional component are required to run the buzzer with 5V. The RC522 is running at 3.3V so we need to step down the voltage a bit.
+
+### Wiring with Buzzer
+
+![Screenshot](wiki/mfrc522-node.png)
+
+## Demonstration
+
+- Some images and video demonstration can be found [here](docs/demo.md)
+
+## Circuit Diagram:
+
+Inside `project-diagram` folder there is a diagram for the system. You can run it with `Fritzing` application and make a printable PCB after aligning components on your wish.
+
+### Sources
+
+https://github.com/miguelbalboa/rfid
+
+https://github.com/mxgxw/MFRC522-python
 
 ## Code of Conduct
 
