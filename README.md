@@ -50,11 +50,13 @@ The examples in the `test` folder will help you get things started
 
 `node /node_modules/mfrc522-rpi/test/dumpNTAG213.js`
 
+#### write NTAG213
+
+https://github.com/firsttris/mfrc522-rpi/issues/5 Thanks to [musdom](https://github.com/musdom)
+
 #### write card
 
 `node /node_modules/mfrc522-rpi/test/write.js`
-
-How to write the NTAG213 Tag https://github.com/firsttris/mfrc522-rpi/issues/5 Thanks to [musdom](https://github.com/musdom) 
 
 ### Card Register
 
