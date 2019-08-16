@@ -36,7 +36,7 @@ npm install mfrc522-rpi
 
 ## Usage
 
-By reading examples in `test` folder, you can interface your raspberry pi accordingly.
+The examples in the `test` folder will help you get things started
 
 #### read uid
 
@@ -54,7 +54,7 @@ By reading examples in `test` folder, you can interface your raspberry pi accord
 
 `node /node_modules/mfrc522-rpi/test/write.js`
 
-Thank you to [musdom](https://github.com/musdom) for providing code example for NTAG213 https://github.com/firsttris/mfrc522-rpi/issues/5
+How to write the NTAG213 Tag https://github.com/firsttris/mfrc522-rpi/issues/5 Thanks to [musdom](https://github.com/musdom) 
 
 ### Card Register
 
@@ -153,19 +153,9 @@ Manufacturer documentation of MFRC522
 
 [MFRC522-Doc.pdf](https://www.nxp.com/documents/data_sheet/MFRC522.pdf)
 
-### NTAG (NXP213)
-
-[about NFC-TAG types](http://www.nfc-tag-shop.de/info/ueber-nfc-tags/nfc-tag-typen.html)
-
-[ebay link](http://www.ebay.de/itm/121594983773?_trksid=p2060353.m2749.l2649)
+[NFC-TAG Types](http://www.nfc-tag-shop.de/info/ueber-nfc-tags/nfc-tag-typen.html)
 
 [NTAG213_215_216.pdf](https://www.nxp.com/documents/data_sheet/NTAG213_215_216.pdf)
-
-### Sources
-
-https://github.com/miguelbalboa/rfid
-
-https://github.com/mxgxw/MFRC522-python
 
 ### Wiring
 
@@ -219,6 +209,12 @@ Those three optional component are required to run the buzzer with 5V. The RC522
 ## Circuit Diagram:
 
 Inside `project-diagram` folder there is a diagram for the system. You can run it with `Fritzing` application and make a printable PCB after aligning components on your wish.
+
+### Sources
+
+https://github.com/miguelbalboa/rfid
+
+https://github.com/mxgxw/MFRC522-python
 
 ## Code of Conduct
 
