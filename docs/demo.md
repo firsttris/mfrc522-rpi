@@ -13,4 +13,6 @@ Those are some images related to a real module build with `mfrc522-rpi` library.
 
 **Video demo**
 
-[![Watch the video](https://i9.ytimg.com/vi/e5D_fy8IIjY/mq1.jpg?sqp=CLjl1uoF&rs=AOn4CLDXxp1OsdHsJlcXN-mVi6xaFhbEYA)](https://youtu.be/e5D_fy8IIjY)
+![Example](https://github.com/firsttris/mfrc522-rpi/raw/master/docs/demonstration/demo.gif)
+
+[Watch on Youtube (with sound)](https://youtu.be/e5D_fy8IIjY)
