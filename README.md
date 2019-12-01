@@ -62,16 +62,39 @@ https://github.com/firsttris/mfrc522-rpi/issues/5 Thanks to [musdom](https://git
 
 ### Card Register
 
-On your NFC Chip are key and data register (see card register). Block 7 is a key register
-It contains the keys for data register 8, 9, 10. There are 2 keys located in block 7:
+Your MiFare NFC chip consists of multiple sectors, each containing 4 blocks.
+The first 3 blocks of every sector are used to store data, the last block
+contains security features (access keys and bits).
+Every block holds 16 bytes of data. A typical MiFare Classic 1K chip
+has 16 of these sectors, accounting to 63 blocks with 1008 bytes in total.
 
-- KEY B: first 6 bit of block 7 - in hex: 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-- KEY A: last 6 bit of block 7 - in hex: 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-- Accessbits: 4 bits in the middle - in decemial: 255, 7, 128, 105
+The first sector is reserved for manufacturer data, while the second sector
+is supposed to contain card holder data.
+So, to be on the safe side, start writing your data on the third sector, starting
+with block 8.
 
-You can authenticate on block 8, 9, 10 with the key's from block 7
+Every last block of a sector is called a trailer block. It contains two access
+keys, which are used for protecting the data against unpermitted access, and
+access bits controlling what can be done with this sector.
+The first 6 bytes of such a block contain access key A, the following 4 bytes
+are the access bits, and the last 6 bytes are access key B (optional key).
 
-The module is configured to authenticate only with Key A.
+Please note that when reading a trailer block with this module, it will always return
+the same (incorrect) values regardless of its actual content. This might be a security
+feature of the chips.
+
+For simplicity reasons, this module will always authenticate with and refer to key A only.
+The default key A on new cards is always `[0xff, 0xff, 0xff, 0xff, 0xff, 0xff]`.
+
+The access bits in the middle of a sector trailer block should never be changed without
+exactly knowing what you're doing. They control what can be done with the current sector
+and which of the access key(s) can be used for authentication.
+If they don't make sense, the sector (4 blocks) is irreversively blocked and can never
+be used again.
+
+If you want to safely change the access key for a sector, please use the
+`writeAuthenticationKey` method (see the `writeAuthenticationKey.js` example in `test`).
+Always store the new access key(s) somewhere safe.
 
 Physical memory content of the chip/card which was included on the RFID-RC522 Module
 
@@ -142,10 +165,11 @@ Block: 62 Data: 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 Block: 63 Data: 0,0,0,0,0,0,255,7,128,105,255,255,255,255,255,255
 ```
 
-### Chang Auth Key
+### Changing Authentication Keys
 
-(not tested)
-Authenticate on block 7 with key from block 7, write new key to block.
+This has so far only been tested with MiFare Classic 1K cards (the ones that come with the reader)!
+Please use the `writeAuthenticationKey` method
+(see the `writeAuthenticationKey.js` example in `test`).
 
 ## Documentation
 

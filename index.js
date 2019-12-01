@@ -475,6 +475,40 @@ class MFRC522 {
       }
     }
   }
+
+  /**
+   * Write a new authentication key
+   * @param {Number} address - block address
+   * @param {Array} newKey - new key A, 6 bytes
+   * @returns {Boolean}
+   * @memberof MFRC522
+   */
+  writeAuthenticationKey(address, newKeyA) {
+    if (!address || !newKeyA) {
+      return false;
+    }
+
+    if (address % 4 !== 3) {
+      const offset = 3 - (address % 4);
+      address = address + offset;
+      console.log(
+        "Error: Chosen block is not a sector trailer! " +
+          "Please write authentication key to block " +
+          (address + offset) +
+          "!"
+      );
+      return false;
+    }
+
+    if (newKeyA.length !== 6) {
+      console.log("Error: Key length must be 6!");
+      return false;
+    }
+
+    const data = this.getDataForBlock(address);
+    const newData = newKeyA.concat(data.slice(6));
+    return this.writeDataToBlock(address, newData);
+  }
 }
 
 module.exports = MFRC522;
