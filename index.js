@@ -490,7 +490,6 @@ class MFRC522 {
 
     if (address % 4 !== 3) {
       const offset = 3 - (address % 4);
-      address = address + offset;
       console.log(
         "Error: Chosen block is not a sector trailer! " +
           "Please write authentication key to block " +
