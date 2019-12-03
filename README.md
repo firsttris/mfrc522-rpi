@@ -66,7 +66,7 @@ Your MiFare NFC chip consists of multiple sectors, each containing 4 blocks.
 The first 3 blocks of every sector are used to store data, the last block
 contains security features (access keys and bits).
 Every block holds 16 bytes of data. A typical MiFare Classic 1K chip
-has 16 of these sectors, accounting to 63 blocks with 1008 bytes in total.
+has 16 of these sectors, accounting to 64 blocks with 1024 bytes in total.
 
 The first sector is reserved for manufacturer data, while the second sector
 is supposed to contain card holder data.
