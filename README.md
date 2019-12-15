@@ -28,13 +28,17 @@ The SPI master driver is disabled by default on Raspbian. To enable it, use rasp
 
 ## Install
 
-Installation tested with node (8,10,11) versions. Currently (Mai 2019) [node-rpio](https://github.com/jperkin/node-rpio#compatibility) is not compatible with node 12. You could use NVM (Node Version Manager) to downgrade your node installation to a lower version (e.g. 11):
-
 [![npm version](https://badge.fury.io/js/mfrc522-rpi.svg)](https://badge.fury.io/js/mfrc522-rpi)
 
 ```
 npm install mfrc522-rpi
 ```
+
+## [node-rpio Compatibility](https://github.com/jperkin/node-rpio/blob/master/README.md#compatibility)
+
+* Raspberry Pi Models: A, B (revisions 1.0 and 2.0), A+, B+, 2, 3, 3+,
+  3 A+, 4, Compute Module 3, Zero.
+* Node.js Versions: 0.8, 0.10, 0.12, 4, 5, 6, 7, 8, 9, 10, 11, 12
 
 ## Usage
 
