@@ -1,5 +1,11 @@
 # Change Log
 
+## [2.1.1 - 2019-12-14]
+
+### Fixed
+
+- Add Docs to .npmignore
+
 ## [2.1.0 - 2019-12-14]
 
 ### Added
