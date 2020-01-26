@@ -196,10 +196,9 @@ class MFRC522 {
       this.setRegisterBitMask(CMD.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
     }
     //Wait for the received data to complete
-    let i = 250; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
+    let i = 2000; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
     let n = 0;
     do {
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250 - i);
       n = this.readRegister(CMD.CommIrqReg);
       i--;
     } while (i != 0 && !(n & 0x01) && !(n & waitIRq));
