@@ -55,7 +55,7 @@ class MFRC522 {
   reset() {
     this.writeRegister(CMD.CommandReg, CMD.PCD_RESETPHASE); // reset chip
     this.writeRegister(CMD.TModeReg, 0x8d); // TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
-    this.writeRegister(CMD.TPrescalerReg, 0x3e); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
+    this.writeRegister(CMD.TPrescalerReg, 0x3e); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25Î¼s.
     this.writeRegister(CMD.TReloadRegL, 30); // Reload timer with 0x3E8 = 1000, ie 25ms before timeout.
     this.writeRegister(CMD.TReloadRegH, 0);
     this.writeRegister(CMD.TxAutoReg, 0x40); // Default 0x00. Force a 100 % ASK modulation independent of the ModGsPReg register setting
@@ -194,8 +194,7 @@ class MFRC522 {
     this.writeRegister(CMD.CommandReg, command);
     if (command == CMD.PCD_TRANSCEIVE) {
       this.setRegisterBitMask(CMD.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
-    }
-    //Wait for the received data to complete
+    }    //Wait for the received data to complete
     let i = 2000; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
     let n = 0;
     do {
@@ -294,6 +293,8 @@ class MFRC522 {
     this.writeRegister(CMD.BitFramingReg, 0x00);
     const uid = [CMD.PICC_ANTICOLL, 0x20];
     let response = this.toCard(CMD.PCD_TRANSCEIVE, uid);
+    let uid_arr = [];
+
     if (response.status) {
       let uidCheck = 0;
       for (let i = 0; i < 4; i++) {
@@ -303,7 +304,38 @@ class MFRC522 {
         response.status = ERROR;
       }
     }
-    return { status: response.status, data: response.data };
+    if (response.status != ERROR) {
+      for(let i = 0; i < 4; i++){
+        if(response.data[i] == 0x88) continue;
+        uid_arr.push(response.data[i]);
+      }
+      if(response.data[0] == 0x88){
+        let select = [CMD.PICC_SELECTTAG,0x70];
+        for(let i = 0; i < 5; i++){
+          select.push(response.data[i])
+        }
+        select = select.concat(this.calculateCRC(select));
+        let select_rsp = this.toCard(CMD.PCD_TRANSCEIVE, select);
+	let anticoll_rsp = this.toCard(CMD.PCD_TRANSCEIVE,[0x95,0x20]);
+        let uidCheck = 0;
+        for (let i = 0; i < 4; i++) {
+          uidCheck = uidCheck ^ anticoll_rsp.data[i];
+        }
+        if (uidCheck != anticoll_rsp.data[4]) {
+          response.status = ERROR;
+        }else{
+          for(let i = 0; i < 4; i++){
+            uid_arr.push(anticoll_rsp.data[i]);
+          }
+        }
+     }
+    }
+
+
+
+
+
+    return { status: response.status, data: uid_arr };
   }
 
   /**
@@ -353,7 +385,7 @@ class MFRC522 {
     if (response.status && response.bitSize == 0x18) {
       memoryCapacity = response.data[0];
     }
-    return memoryCapacity;
+    return [memoryCapacity,response.data];
   }
 
   /**
