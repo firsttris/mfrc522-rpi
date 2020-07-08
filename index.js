@@ -194,7 +194,8 @@ class MFRC522 {
     this.writeRegister(CMD.CommandReg, command);
     if (command == CMD.PCD_TRANSCEIVE) {
       this.setRegisterBitMask(CMD.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
-    }    //Wait for the received data to complete
+    }    
+    //Wait for the received data to complete
     let i = 2000; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
     let n = 0;
     do {
