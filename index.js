@@ -55,7 +55,7 @@ class MFRC522 {
   reset() {
     this.writeRegister(CMD.CommandReg, CMD.PCD_RESETPHASE); // reset chip
     this.writeRegister(CMD.TModeReg, 0x8d); // TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
-    this.writeRegister(CMD.TPrescalerReg, 0x3e); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25Î¼s.
+    this.writeRegister(CMD.TPrescalerReg, 0x3e); // TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25μs.
     this.writeRegister(CMD.TReloadRegL, 30); // Reload timer with 0x3E8 = 1000, ie 25ms before timeout.
     this.writeRegister(CMD.TReloadRegH, 0);
     this.writeRegister(CMD.TxAutoReg, 0x40); // Default 0x00. Force a 100 % ASK modulation independent of the ModGsPReg register setting
@@ -385,7 +385,7 @@ class MFRC522 {
     if (response.status && response.bitSize == 0x18) {
       memoryCapacity = response.data[0];
     }
-    return [memoryCapacity,response.data];
+    return memoryCapacity;
   }
 
   /**
