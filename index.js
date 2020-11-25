@@ -29,8 +29,9 @@ class MFRC522 {
     this.reset_pin = pin;
     // Hold RESET pin low for 50ms to hard reset the reader
     rpio.open(this.reset_pin, rpio.OUTPUT, rpio.LOW);
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
-    rpio.write(this.reset_pin, rpio.HIGH);
+    setTimeout(function() {
+          rpio.write(this.reset_pin, rpio.HIGH);
+    }.bind(this), 50);
     return this;
   }
 
