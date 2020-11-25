@@ -195,7 +195,7 @@ class MFRC522 {
     this.writeRegister(CMD.CommandReg, command);
     if (command == CMD.PCD_TRANSCEIVE) {
       this.setRegisterBitMask(CMD.BitFramingReg, 0x80); //StartSend=1,transmission of data starts
-    }
+    }    
     //Wait for the received data to complete
     let i = 2000; //According to the clock frequency adjustment, operation M1 card maximum waiting time 25ms
     let n = 0;
@@ -295,6 +295,8 @@ class MFRC522 {
     this.writeRegister(CMD.BitFramingReg, 0x00);
     const uid = [CMD.PICC_ANTICOLL, 0x20];
     let response = this.toCard(CMD.PCD_TRANSCEIVE, uid);
+    let uid_arr = [];
+
     if (response.status) {
       let uidCheck = 0;
       for (let i = 0; i < 4; i++) {
@@ -304,7 +306,38 @@ class MFRC522 {
         response.status = ERROR;
       }
     }
-    return { status: response.status, data: response.data };
+    if (response.status != ERROR) {
+      for(let i = 0; i < 4; i++){
+        if(response.data[i] == 0x88) continue;
+        uid_arr.push(response.data[i]);
+      }
+      if(response.data[0] == 0x88){
+        let select = [CMD.PICC_SELECTTAG,0x70];
+        for(let i = 0; i < 5; i++){
+          select.push(response.data[i])
+        }
+        select = select.concat(this.calculateCRC(select));
+        let select_rsp = this.toCard(CMD.PCD_TRANSCEIVE, select);
+	let anticoll_rsp = this.toCard(CMD.PCD_TRANSCEIVE,[0x95,0x20]);
+        let uidCheck = 0;
+        for (let i = 0; i < 4; i++) {
+          uidCheck = uidCheck ^ anticoll_rsp.data[i];
+        }
+        if (uidCheck != anticoll_rsp.data[4]) {
+          response.status = ERROR;
+        }else{
+          for(let i = 0; i < 4; i++){
+            uid_arr.push(anticoll_rsp.data[i]);
+          }
+        }
+     }
+    }
+
+
+
+
+
+    return { status: response.status, data: uid_arr };
   }
 
   /**
